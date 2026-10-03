@@ -1112,23 +1112,30 @@ class _HelpCenterModalState extends State<HelpCenterModal> {
               ),
               const SizedBox(height: 10),
 
-              // Kategori Chips
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: _categories.map((cat) {
-                  final isSelected = cat['id'] == _selectedCategory;
-                  return ChoiceChip(
-                    label: Text(cat['label']!, style: const TextStyle(fontSize: 11)),
-                    selected: isSelected,
-                    selectedColor: const Color(0xFFEEF2FF),
-                    labelStyle: TextStyle(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? const Color(0xFF4F46E5) : (isDark ? Colors.white70 : Colors.black87),
+              // Dropdown Kategori Keluhan
+              DropdownButtonFormField<String>(
+                value: _selectedCategory,
+                decoration: InputDecoration(
+                  labelText: 'Pilih Kategori Keluhan',
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                items: _categories.map((cat) {
+                  return DropdownMenuItem<String>(
+                    value: cat['id'],
+                    child: Text(
+                      cat['label']!,
+                      style: const TextStyle(fontSize: 13),
                     ),
-                    onSelected: (_) => setState(() => _selectedCategory = cat['id']!),
                   );
                 }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() => _selectedCategory = val);
+                  }
+                },
               ),
               const SizedBox(height: 10),
 
