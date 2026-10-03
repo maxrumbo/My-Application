@@ -1,17 +1,18 @@
 name: chatbot_mobile
-description: "AE Chatbot Mobile Client in Flutter"
+description: "AI Chatbot Mobile Client in Flutter"
 publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk': '>=3.0.0 <4.0.0'
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
   flutter_riverpod: ^2.5.1
   dio: ^5.4.3+1
-  flutter_markdown: ^0.7.2
+  http: ^1.2.1
+  flutter_markdown_plus: ^1.0.1
 
 dev_dependencies:
   flutter_test:
