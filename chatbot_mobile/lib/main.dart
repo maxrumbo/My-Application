@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -500,7 +501,7 @@ class _LoginScreenState extends State<LoginScreen> {
 }
 
 // ==================== PROFILE SCREEN ====================
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   final UserProfile user;
   final AppStrings strings;
   final VoidCallback onLogout;
@@ -514,107 +515,298 @@ class ProfileScreen extends StatelessWidget {
     this.onOpenLogin,
   });
 
-  void _showAccountInfo(BuildContext context) {
-    showDialog(
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _routeAlerts = true;
+  bool _soundAlerts = true;
+  bool _emailDigest = false;
+
+  void _showBlurredModalDialog(
+    BuildContext context, {
+    required String title,
+    required Widget content,
+    List<Widget>? actions,
+    IconData? icon,
+  }) {
+    showGeneralDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(strings.isEn ? 'Account Information' : 'Informasi Akun'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildRow(strings.isEn ? 'Name' : 'Nama', user.name),
-            const Divider(height: 16),
-            _buildRow(strings.isEn ? 'Email' : 'Email', user.email),
-            const Divider(height: 16),
-            _buildRow(strings.isEn ? 'Role' : 'Peran',
-                strings.isEn ? 'Courier Staff' : 'Staf Kurir'),
-            const Divider(height: 16),
-            _buildRow(strings.isEn ? 'Status' : 'Status',
-                user.isGuest ? strings.guestMode : (strings.isEn ? 'Active' : 'Aktif')),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(strings.cancel),
+      barrierDismissible: true,
+      barrierLabel: 'Modal',
+      barrierColor: Colors.black.withOpacity(0.4),
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (context, anim1, anim2) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+              side: BorderSide(
+                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+              ),
+            ),
+            elevation: 12,
+            backgroundColor: isDark
+                ? const Color(0xFF1E293B).withOpacity(0.9)
+                : Colors.white.withOpacity(0.92),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (icon != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFEEF2FF),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, color: const Color(0xFF4F46E5), size: 28),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Flexible(child: SingleChildScrollView(child: content)),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: actions ?? [
+                      Expanded(
+                        child: FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF4F46E5),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(widget.strings.cancel),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
+        );
+      },
+      transitionBuilder: (context, anim1, anim2, child) {
+        return Transform.scale(
+          scale: Curves.easeOutBack.transform(anim1.value),
+          child: FadeTransition(
+            opacity: anim1,
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAccountInfo(BuildContext context) {
+    _showBlurredModalDialog(
+      context,
+      title: widget.strings.isEn ? 'Account Information' : 'Informasi Akun',
+      icon: Icons.person_outline_rounded,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildInfoRow(widget.strings.isEn ? 'Full Name' : 'Nama Lengkap', widget.user.name),
+          const Divider(height: 20),
+          _buildInfoRow(widget.strings.isEn ? 'Email' : 'Alamat Email', widget.user.email),
+          const Divider(height: 20),
+          _buildInfoRow(widget.strings.isEn ? 'Role' : 'Peran/Jabatan',
+              widget.strings.isEn ? 'Courier Staff' : 'Staf Kurir & Pengiriman'),
+          const Divider(height: 20),
+          _buildInfoRow(widget.strings.isEn ? 'Status' : 'Status Akun',
+              widget.strings.isEn ? 'Active & Verified' : 'Aktif & Terverifikasi'),
         ],
       ),
     );
   }
 
   void _showNotifications(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(strings.isEn ? 'Delivery Notifications' : 'Notifikasi Pengiriman'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(strings.isEn ? 'Route Alerts' : 'Notifikasi Rute'),
-              subtitle: Text(strings.isEn ? 'Get traffic & route updates' : 'Terima pembaruan rute & lalu lintas', style: const TextStyle(fontSize: 11)),
-              value: true,
-              onChanged: (_) {},
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(strings.isEn ? 'Sound Alerts' : 'Suara Peringatan'),
-              subtitle: Text(strings.isEn ? 'Sound on new package' : 'Suara saat ada pesan/paket baru', style: const TextStyle(fontSize: 11)),
-              value: true,
-              onChanged: (_) {},
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(strings.cancel),
-          ),
-        ],
+    _showBlurredModalDialog(
+      context,
+      title: widget.strings.isEn ? 'Delivery Notifications' : 'Notifikasi Pengiriman',
+      icon: Icons.notifications_none_rounded,
+      content: StatefulBuilder(
+        builder: (context, setModalState) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                activeColor: const Color(0xFF4F46E5),
+                title: Text(
+                  widget.strings.isEn ? 'Route Alerts' : 'Peringatan Rute & Lalu Lintas',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  widget.strings.isEn ? 'Get real-time traffic updates' : 'Dapatkan pembaruan rute & macet real-time',
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+                value: _routeAlerts,
+                onChanged: (val) {
+                  setState(() => _routeAlerts = val);
+                  setModalState(() {});
+                },
+              ),
+              const Divider(height: 12),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                activeColor: const Color(0xFF4F46E5),
+                title: Text(
+                  widget.strings.isEn ? 'Sound Alerts' : 'Suara Peringatan',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  widget.strings.isEn ? 'Play sound on new task/message' : 'Bunyikan nada saat ada tugas/pesan baru',
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+                value: _soundAlerts,
+                onChanged: (val) {
+                  setState(() => _soundAlerts = val);
+                  setModalState(() {});
+                },
+              ),
+              const Divider(height: 12),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                activeColor: const Color(0xFF4F46E5),
+                title: Text(
+                  widget.strings.isEn ? 'Daily Email Summary' : 'Ringkasan Email Harian',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  widget.strings.isEn ? 'Receive daily delivery logs' : 'Kirim ringkasan laporan ke email',
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+                value: _emailDigest,
+                onChanged: (val) {
+                  setState(() => _emailDigest = val);
+                  setModalState(() {});
+                },
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
   void _showSecurity(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(strings.isEn ? 'Security & Password' : 'Keamanan & Kata Sandi'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.lock_reset_rounded, color: Color(0xFF4F46E5)),
-              title: Text(strings.isEn ? 'Change Password' : 'Ubah Kata Sandi'),
-              onTap: () {
-                Navigator.pop(context);
-                showAppToast(context, strings.isEn ? 'Password reset link sent' : 'Tautan reset sandi telah dikirim');
-              },
+    _showBlurredModalDialog(
+      context,
+      title: widget.strings.isEn ? 'Security & Password' : 'Keamanan & Kata Sandi',
+      icon: Icons.security_outlined,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEEF2FF),
+              borderRadius: BorderRadius.circular(12),
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(strings.cancel),
+            child: Row(
+              children: [
+                const Icon(Icons.shield_outlined, color: Color(0xFF4F46E5), size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    widget.strings.isEn
+                        ? 'Your account is protected with SSL/TLS encryption.'
+                        : 'Akun Anda dilindungi dengan enkripsi aman SSL/TLS.',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF334155)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          ListTile(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            tileColor: Theme.of(context).cardColor,
+            leading: const Icon(Icons.lock_reset_rounded, color: Color(0xFF4F46E5)),
+            title: Text(
+              widget.strings.isEn ? 'Change Password' : 'Ubah Kata Sandi',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text(
+              widget.strings.isEn ? 'Send reset link to your email' : 'Kirim tautan atur ulang ke email',
+              style: const TextStyle(fontSize: 11, color: Colors.grey),
+            ),
+            trailing: const Icon(Icons.chevron_right, size: 20),
+            onTap: () {
+              Navigator.pop(context);
+              showAppToast(
+                context,
+                widget.strings.isEn ? 'Password reset link sent to email' : 'Tautan atur ulang sandi dikirim ke email',
+              );
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildRow(String label, String value) {
+  void _showHelpCenter(BuildContext context) {
+    _showBlurredModalDialog(
+      context,
+      title: widget.strings.isEn ? 'Help Center & Support' : 'Pusat Bantuan & Support',
+      icon: Icons.help_outline_rounded,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.strings.isEn ? 'Need assistance with Courier AI?' : 'Butuh bantuan penggunaan Asisten AI Kurir?',
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            widget.strings.isEn
+                ? 'Contact our 24/7 support team or email us at support@courier.ai for immediate help.'
+                : 'Hubungi tim dukungan 24/7 kami atau email ke support@courier.ai untuk bantuan langsung.',
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 44),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              showAppToast(context, widget.strings.isEn ? 'Support ticket created' : 'Tiket bantuan telah dibuat');
+            },
+            icon: const Icon(Icons.support_agent_rounded, size: 18),
+            label: Text(widget.strings.isEn ? 'Contact Customer Support' : 'Hubungi Tim Support'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
       ],
     );
@@ -626,30 +818,36 @@ class ProfileScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(strings.profileTitle),
+        title: Text(widget.strings.profileTitle),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
+            // User Header
             Center(
               child: Column(
                 children: [
                   CircleAvatar(
-                    radius: 36,
-                    backgroundColor: const Color(0xFFEEF2FF),
-                    child: Text(
-                      user.name.substring(0, 1).toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF4F46E5),
-                      ),
-                    ),
+                    radius: 38,
+                    backgroundColor: widget.user.isGuest
+                        ? const Color(0xFFF1F5F9)
+                        : const Color(0xFFEEF2FF),
+                    child: widget.user.isGuest
+                        ? const Icon(Icons.person_outline_rounded,
+                            size: 40, color: Colors.grey)
+                        : Text(
+                            widget.user.name.substring(0, 1).toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 30,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF4F46E5),
+                            ),
+                          ),
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    user.name,
+                    widget.user.name,
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -657,10 +855,10 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    user.email,
+                    widget.user.email,
                     style: const TextStyle(color: Colors.grey, fontSize: 13),
                   ),
-                  if (!user.isGuest) ...[
+                  if (!widget.user.isGuest) ...[
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -673,7 +871,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        strings.isEn ? 'Verified Member' : 'Akun Terverifikasi',
+                        widget.strings.isEn ? 'Verified Staff' : 'Staf Terverifikasi',
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -687,79 +885,133 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Kartu Pengaturan Akun
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(
-                  color: isDark
-                      ? const Color(0xFF334155)
-                      : const Color(0xFFE2E8F0),
+            // Mode Tamu vs Akun Terdaftar
+            if (widget.user.isGuest) ...[
+              // Tampilan Khusus Akun Guest
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF334155)
+                        : const Color(0xFFE2E8F0),
+                  ),
                 ),
-              ),
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.person_outline_rounded,
-                        color: Color(0xFF4F46E5)),
-                    title: Text(
-                        strings.isEn ? 'Account Information' : 'Informasi Akun'),
-                    trailing:
-                        const Icon(Icons.chevron_right, color: Colors.grey),
-                    onTap: () => _showAccountInfo(context),
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.notifications_none_rounded,
-                        color: Color(0xFF4F46E5)),
-                    title: Text(strings.isEn
-                        ? 'Delivery Notifications'
-                        : 'Notifikasi Pengiriman'),
-                    trailing:
-                        const Icon(Icons.chevron_right, color: Colors.grey),
-                    onTap: () => _showNotifications(context),
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.security_outlined,
-                        color: Color(0xFF4F46E5)),
-                    title: Text(strings.isEn
-                        ? 'Security & Password'
-                        : 'Keamanan & Kata Sandi'),
-                    trailing:
-                        const Icon(Icons.chevron_right, color: Colors.grey),
-                    onTap: () => _showSecurity(context),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            if (user.isGuest)
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF4F46E5),
-                    side: const BorderSide(color: Color(0xFF4F46E5), width: 1.5),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                child: Column(
+                  children: [
+                    const Icon(Icons.lock_person_outlined,
+                        size: 44, color: Color(0xFF4F46E5)),
+                    const SizedBox(height: 12),
+                    Text(
+                      widget.strings.isEn ? 'Guest Mode Active' : 'Mode Tamu Aktif',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    if (onOpenLogin != null) {
-                      onOpenLogin!();
-                    }
-                  },
-                  icon: const Icon(Icons.login_rounded, size: 20),
-                  label: Text(strings.login, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.strings.isEn
+                          ? 'You are browsing in Guest Mode. Sign in to access full profile settings, chat history, and account features.'
+                          : 'Anda sedang menggunakan Mode Tamu. Silakan masuk ke akun Anda untuk mengakses fitur profil, riwayat chat, dan pengaturan akun.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey, height: 1.4),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF4F46E5),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          if (widget.onOpenLogin != null) {
+                            widget.onOpenLogin!();
+                          }
+                        },
+                        icon: const Icon(Icons.login_rounded, size: 20),
+                        label: Text(
+                          widget.strings.login,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              )
-            else
+              ),
+            ] else ...[
+              // Tampilan Akun Sudah Login
+              Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(
+                    color: isDark
+                        ? const Color(0xFF334155)
+                        : const Color(0xFFE2E8F0),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.person_outline_rounded,
+                          color: Color(0xFF4F46E5)),
+                      title: Text(widget.strings.isEn
+                          ? 'Account Information'
+                          : 'Informasi Akun'),
+                      trailing:
+                          const Icon(Icons.chevron_right, color: Colors.grey),
+                      onTap: () => _showAccountInfo(context),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.notifications_none_rounded,
+                          color: Color(0xFF4F46E5)),
+                      title: Text(widget.strings.isEn
+                          ? 'Delivery Notifications'
+                          : 'Notifikasi Pengiriman'),
+                      trailing:
+                          const Icon(Icons.chevron_right, color: Colors.grey),
+                      onTap: () => _showNotifications(context),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.security_outlined,
+                          color: Color(0xFF4F46E5)),
+                      title: Text(widget.strings.isEn
+                          ? 'Security & Password'
+                          : 'Keamanan & Kata Sandi'),
+                      trailing:
+                          const Icon(Icons.chevron_right, color: Colors.grey),
+                      onTap: () => _showSecurity(context),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.help_outline_rounded,
+                          color: Color(0xFF4F46E5)),
+                      title: Text(widget.strings.isEn
+                          ? 'Help Center & Support'
+                          : 'Pusat Bantuan & Support'),
+                      trailing:
+                          const Icon(Icons.chevron_right, color: Colors.grey),
+                      onTap: () => _showHelpCenter(context),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
@@ -773,12 +1025,16 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   onPressed: () {
                     Navigator.pop(context);
-                    onLogout();
+                    widget.onLogout();
                   },
                   icon: const Icon(Icons.logout_rounded, size: 20),
-                  label: Text(strings.logout, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  label: Text(
+                    widget.strings.logout,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
+            ],
           ],
         ),
       ),
