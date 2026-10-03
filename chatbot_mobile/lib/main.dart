@@ -11,7 +11,7 @@ void main() {
   runApp(const ChatbotApp());
 }
 
-// Global Toast / Pop-up Notification (1 Style, 1 Location, 3 Seconds, Swipeable)
+// Global Toast / Notification SnackBar
 void showAppToast(BuildContext context, String message, {bool isError = false}) {
   ScaffoldMessenger.of(context).hideCurrentSnackBar();
   ScaffoldMessenger.of(context).showSnackBar(
@@ -19,20 +19,25 @@ void showAppToast(BuildContext context, String message, {bool isError = false}) 
       duration: const Duration(seconds: 3),
       behavior: SnackBarBehavior.floating,
       dismissDirection: DismissDirection.horizontal,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      margin: const EdgeInsets.all(16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       backgroundColor:
-          isError ? const Color(0xFFDC2626) : const Color(0xFF1E293B),
+          isError ? const Color(0xFFDC2626) : const Color(0xFF0F172A),
       content: Row(
         children: [
-          Icon(
-            isError
-                ? Icons.error_outline_rounded
-                : Icons.check_circle_outline_rounded,
-            color: Colors.white,
-            size: 20,
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: isError ? Colors.white.withOpacity(0.2) : const Color(0xFF10B981).withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isError ? Icons.error_outline_rounded : Icons.check_circle_rounded,
+              color: isError ? Colors.white : const Color(0xFF10B981),
+              size: 18,
+            ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
@@ -49,7 +54,7 @@ void showAppToast(BuildContext context, String message, {bool isError = false}) 
   );
 }
 
-// Localizations / Dictionary Map (100% Functional ID / EN - Pure Single Language)
+// Localizations Map
 class AppStrings {
   final String lang;
   AppStrings(this.lang);
@@ -57,20 +62,18 @@ class AppStrings {
   bool get isEn => lang == 'en';
 
   String get appTitle => isEn ? 'Courier AI Assistant' : 'Asisten AI Kurir';
-  String get newChat => isEn ? '+ New Chat' : '+ Chat Baru';
-  String get searchHistory =>
-      isEn ? 'Search history...' : 'Cari riwayat chat...';
+  String get newChat => isEn ? 'New Chat' : 'Chat Baru';
+  String get searchHistory => isEn ? 'Search history...' : 'Cari riwayat chat...';
   String get chatHistory => isEn ? 'Chat History' : 'Riwayat Percakapan';
   String get guestName => isEn ? 'Guest User' : 'Pengguna Tamu';
   String get guestMode => isEn ? 'Guest Mode' : 'Mode Tamu';
-  String get guestSub =>
-      isEn ? 'Temporary Session' : 'Sesi Sementara';
+  String get guestSub => isEn ? 'Temporary Session' : 'Sesi Sementara';
   String get guestNote => isEn
-      ? 'Chat history is saved after sign in.'
-      : 'Riwayat chat akan disimpan setelah Anda masuk.';
-  String get noHistory =>
-      isEn ? 'No chat history found' : 'Tidak ada riwayat ditemukan';
+      ? 'Chat history will be saved after signing in.'
+      : 'Riwayat chat akan tersimpan otomatis setelah Anda masuk.';
+  String get noHistory => isEn ? 'No chat history found' : 'Tidak ada riwayat ditemukan';
   String get login => isEn ? 'Sign In' : 'Masuk';
+  String get register => isEn ? 'Register' : 'Daftar';
   String get logout => isEn ? 'Logout' : 'Keluar';
   String get shareChat => isEn ? 'Share conversation' : 'Bagikan percakapan';
   String get pinChat => isEn ? 'Pin conversation' : 'Sematkan';
@@ -80,22 +83,15 @@ class AppStrings {
   String get pinLimitError => isEn
       ? '⚠️ Maximum 5 pinned chats allowed.'
       : '⚠️ Batas maksimal 5 sematan telah tercapai.';
-  String get chatRenamed =>
-      isEn ? 'Chat renamed' : 'Nama chat berhasil diubah';
-  String get chatShared =>
-      isEn ? 'Chat link copied' : 'Tautan percakapan berhasil disalin';
-  String get typeMessage =>
-      isEn ? 'Type a message...' : 'Tulis pesan Anda...';
+  String get chatRenamed => isEn ? 'Chat renamed' : 'Nama chat berhasil diubah';
+  String get chatShared => isEn ? 'Chat link copied' : 'Tautan percakapan berhasil disalin';
+  String get typeMessage => isEn ? 'Type a message...' : 'Tulis pesan Anda...';
   String get voiceInput => isEn ? 'Voice Input' : 'Input Suara';
-  String get listening =>
-      isEn ? 'Listening... Speak now' : 'Mendengarkan... Bicara sekarang';
-  String get speakHint =>
-      isEn ? 'Tap microphone to speak' : 'Ketuk mikrofon untuk bicara';
+  String get listening => isEn ? 'Listening... Speak now' : 'Mendengarkan... Bicara sekarang';
   String get send => isEn ? 'Send' : 'Kirim';
   String get cancel => isEn ? 'Cancel' : 'Batal';
   String get stop => isEn ? 'Stop' : 'Hentikan';
-  String get welcomeTitle =>
-      isEn ? 'How can I help you today?' : 'Ada yang bisa dibantu hari ini?';
+  String get welcomeTitle => isEn ? 'How can I help you today?' : 'Ada yang bisa dibantu hari ini?';
   String get welcomeSub => isEn
       ? 'Select a quick topic or type your question:'
       : 'Pilih saran cepat atau tulis pertanyaan Anda:';
@@ -105,17 +101,15 @@ class AppStrings {
   String get profileTitle => isEn ? 'User Profile' : 'Profil Pengguna';
   String get darkMode => isEn ? 'Dark Mode' : 'Mode Gelap';
   String get appLanguage => isEn ? 'Language' : 'Bahasa UI';
-  String get loginWelcome => isEn ? 'Welcome Back' : 'Selamat Datang';
+  String get loginWelcome => isEn ? 'Welcome to Courier AI' : 'Selamat Datang di Asisten Kurir';
   String get loginSub => isEn
-      ? 'Sign in to save chat history & unlock full access'
-      : 'Masuk untuk menyimpan riwayat & akses penuh';
-  String get continueAsGuest =>
-      isEn ? 'Continue as Guest ➔' : 'Lanjutkan sebagai Tamu ➔';
+      ? 'Sign in or create an account to unlock all features'
+      : 'Masuk atau buat akun untuk membuka semua akses fitur';
+  String get continueAsGuest => isEn ? 'Continue as Guest ➔' : 'Lanjutkan sebagai Tamu ➔';
   String get emailLabel => isEn ? 'Email Address' : 'Alamat Email';
   String get passwordLabel => isEn ? 'Password' : 'Kata Sandi';
-  String get processing =>
-      isEn ? 'Processing response...' : 'Memproses jawaban...';
-  String get typing => isEn ? 'AI is typing...' : 'AI sedang mengetik...';
+  String get googleSignIn => isEn ? 'Continue with Google' : 'Lanjutkan dengan Google';
+  String get processing => isEn ? 'Processing response...' : 'Memproses jawaban...';
 }
 
 class ChatbotApp extends StatefulWidget {
@@ -142,6 +136,7 @@ class _ChatbotAppState extends State<ChatbotApp> {
       themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
       theme: ThemeData(
         useMaterial3: true,
+        fontFamily: 'Roboto',
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF4F46E5),
           brightness: Brightness.light,
@@ -159,6 +154,7 @@ class _ChatbotAppState extends State<ChatbotApp> {
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
+        fontFamily: 'Roboto',
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF6366F1),
           brightness: Brightness.dark,
@@ -202,7 +198,7 @@ class UserProfile {
   }
 }
 
-// Message Model
+// Chat Models
 class ChatMessage {
   final String id;
   final String text;
@@ -220,10 +216,7 @@ class ChatMessage {
     this.modelUsed,
   });
 
-  ChatMessage copyWith({
-    String? text,
-    String? status,
-  }) {
+  ChatMessage copyWith({String? text, String? status}) {
     return ChatMessage(
       id: id,
       text: text ?? this.text,
@@ -235,7 +228,6 @@ class ChatMessage {
   }
 }
 
-// Session Model
 class ChatSession {
   final String id;
   String title;
@@ -268,7 +260,7 @@ class MainNavigationWrapper extends StatefulWidget {
 }
 
 class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
-  bool _showLoginScreen = false;
+  bool _showAuthScreen = false;
   String _language = 'id';
   late UserProfile _user;
 
@@ -287,11 +279,12 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
     });
   }
 
-  void _login(String email, String password) {
+  void _loginSuccess(String email, {String? displayName}) {
     setState(() {
-      _showLoginScreen = false;
+      _showAuthScreen = false;
+      final name = displayName ?? (email.contains('@') ? email.split('@').first : email);
       _user = UserProfile(
-        name: email.contains('@') ? email.split('@').first : email,
+        name: name.substring(0, 1).toUpperCase() + name.substring(1),
         email: email,
         isGuest: false,
       );
@@ -300,14 +293,14 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
 
   void _continueAsGuest() {
     setState(() {
-      _showLoginScreen = false;
+      _showAuthScreen = false;
       _user = UserProfile.guest(_language);
     });
   }
 
-  void _openLogin() {
+  void _openAuth() {
     setState(() {
-      _showLoginScreen = true;
+      _showAuthScreen = true;
     });
   }
 
@@ -321,10 +314,10 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   Widget build(BuildContext context) {
     final s = AppStrings(_language);
 
-    if (_showLoginScreen) {
-      return LoginScreen(
+    if (_showAuthScreen) {
+      return AuthScreen(
         strings: s,
-        onLogin: _login,
+        onAuthSuccess: _loginSuccess,
         onContinueAsGuest: _continueAsGuest,
       );
     }
@@ -336,164 +329,652 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
       onToggleDarkMode: widget.onToggleDarkMode,
       onChangeLanguage: _changeLanguage,
       onLogout: _logout,
-      onOpenLogin: _openLogin,
+      onOpenLogin: _openAuth,
     );
   }
 }
 
-// ==================== LOGIN SCREEN ====================
-class LoginScreen extends StatefulWidget {
+// ==================== AUTH SCREEN (LOGIN & REGISTER & GOOGLE) ====================
+class AuthScreen extends StatefulWidget {
   final AppStrings strings;
-  final Function(String email, String password) onLogin;
+  final Function(String email, {String? displayName}) onAuthSuccess;
   final VoidCallback onContinueAsGuest;
 
-  const LoginScreen({
+  const AuthScreen({
     super.key,
     required this.strings,
-    required this.onLogin,
+    required this.onAuthSuccess,
     required this.onContinueAsGuest,
   });
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _AuthScreenState extends State<AuthScreen> {
+  bool _isRegisterTab = false;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _nameController = TextEditingController();
+
+  void _handleGoogleSignIn() {
+    showAppToast(context, 'Menebak akun Google... Berhasil masuk!');
+    widget.onAuthSuccess('maxwell.kurir@gmail.com', displayName: 'Maxwell Rumahorbo');
+  }
+
+  void _submitAuth() {
+    final email = _emailController.text.trim();
+    final pwd = _passwordController.text.trim();
+    final name = _nameController.text.trim();
+
+    if (email.isEmpty || pwd.isEmpty) {
+      showAppToast(context, 'Mohon isi email dan kata sandi', isError: true);
+      return;
+    }
+
+    if (_isRegisterTab) {
+      // Direct to OTP Verification for Registration
+      _showOtpDialog(
+        email: email,
+        title: 'Verifikasi Email Pendaftaran',
+        subtitle: 'Masukkan 4 digit kode OTP yang dikirim ke email $email',
+        onVerified: () {
+          widget.onAuthSuccess(email, displayName: name.isNotEmpty ? name : null);
+          showAppToast(context, 'Akun berhasil terdaftar dan terverifikasi!');
+        },
+      );
+    } else {
+      // Login Direct
+      widget.onAuthSuccess(email);
+      showAppToast(context, 'Selamat datang kembali!');
+    }
+  }
+
+  void _showOtpDialog({
+    required String email,
+    required String title,
+    required String subtitle,
+    required VoidCallback onVerified,
+  }) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierLabel: 'OTP',
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: OtpVerificationModal(
+            email: email,
+            title: title,
+            subtitle: subtitle,
+            strings: widget.strings,
+            onVerified: () {
+              Navigator.pop(context);
+              onVerified();
+            },
+          ),
+        );
+      },
+      transitionBuilder: (context, anim1, anim2, child) {
+        return Transform.scale(
+          scale: Curves.easeOutBack.transform(anim1.value),
+          child: FadeTransition(opacity: anim1, child: child),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEEF2FF),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.local_shipping_rounded,
-                  size: 40,
-                  color: Color(0xFF4F46E5),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                widget.strings.loginWelcome,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                widget.strings.loginSub,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.grey, fontSize: 13),
-              ),
-              const SizedBox(height: 28),
-
-              // Form Box
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isDark
-                        ? const Color(0xFF334155)
-                        : const Color(0xFFE2E8F0),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Brand Header
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF4F46E5).withOpacity(0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.local_shipping_rounded,
+                    size: 38,
+                    color: Colors.white,
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.strings.emailLabel,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 13),
+                const SizedBox(height: 16),
+                Text(
+                  widget.strings.loginWelcome,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  widget.strings.loginSub,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+                const SizedBox(height: 28),
+
+                // Card Auth Box
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
                     ),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: _emailController,
-                      decoration: InputDecoration(
-                        hintText: 'nama@kurir.com',
-                        prefixIcon: const Icon(Icons.email_outlined, size: 20),
-                        isDense: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // Toggle Segmented (Masuk | Daftar)
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => setState(() => _isRegisterTab = false),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: !_isRegisterTab
+                                        ? (isDark ? const Color(0xFF1E293B) : Colors.white)
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(10),
+                                    boxShadow: !_isRegisterTab
+                                        ? [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.06),
+                                              blurRadius: 4,
+                                            )
+                                          ]
+                                        : [],
+                                  ),
+                                  child: Text(
+                                    widget.strings.login,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      color: !_isRegisterTab
+                                          ? const Color(0xFF4F46E5)
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => setState(() => _isRegisterTab = true),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: _isRegisterTab
+                                        ? (isDark ? const Color(0xFF1E293B) : Colors.white)
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(10),
+                                    boxShadow: _isRegisterTab
+                                        ? [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.06),
+                                              blurRadius: 4,
+                                            )
+                                          ]
+                                        : [],
+                                  ),
+                                  child: Text(
+                                    widget.strings.register,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      color: _isRegisterTab
+                                          ? const Color(0xFF4F46E5)
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      widget.strings.passwordLabel,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        hintText: '••••••••',
-                        prefixIcon: const Icon(Icons.lock_outline, size: 20),
-                        isDense: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                      const SizedBox(height: 20),
+
+                      // Google Sign In Button
+                      _buildGoogleButton(
+                        isDark: isDark,
+                        onPressed: _handleGoogleSignIn,
+                        label: widget.strings.googleSignIn,
+                      ),
+
+                      const SizedBox(height: 18),
+                      Row(
+                        children: [
+                          Expanded(child: Divider(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0))),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Text(
+                              'atau email',
+                              style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                            ),
+                          ),
+                          Expanded(child: Divider(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0))),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+
+                      if (_isRegisterTab) ...[
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Nama Lengkap',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        TextField(
+                          controller: _nameController,
+                          decoration: InputDecoration(
+                            hintText: 'Misal: Budi Santoso',
+                            prefixIcon: const Icon(Icons.person_outline_rounded, size: 20),
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                      ],
+
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          widget.strings.emailLabel,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF4F46E5),
-                        side: const BorderSide(color: Color(0xFF4F46E5), width: 1.5),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        minimumSize: const Size(double.infinity, 48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          hintText: 'nama@kurir.com',
+                          prefixIcon: const Icon(Icons.email_outlined, size: 20),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
-                      onPressed: () {
-                        final email = _emailController.text.trim();
-                        final pwd = _passwordController.text.trim();
-                        if (email.isNotEmpty && pwd.isNotEmpty) {
-                          widget.onLogin(email, pwd);
-                        } else {
-                          widget.onLogin('kurir@myproject.ai', '123456');
-                        }
-                      },
-                      icon: const Icon(Icons.login_rounded, size: 20),
-                      label: Text(
-                        widget.strings.login,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
+                      const SizedBox(height: 14),
+
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          widget.strings.passwordLabel,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
                         ),
                       ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: _passwordController,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          hintText: '••••••••',
+                          prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+
+                      // Submit Action Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF4F46E5),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          onPressed: _submitAuth,
+                          icon: Icon(
+                            _isRegisterTab ? Icons.how_to_reg_rounded : Icons.login_rounded,
+                            size: 18,
+                          ),
+                          label: Text(
+                            _isRegisterTab ? 'Daftar dengan OTP Email' : widget.strings.login,
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+                TextButton.icon(
+                  onPressed: widget.onContinueAsGuest,
+                  icon: const Icon(Icons.person_outline_rounded, size: 18),
+                  label: Text(widget.strings.continueAsGuest),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGoogleButton({
+    required bool isDark,
+    required VoidCallback onPressed,
+    required String label,
+  }) {
+    return OutlinedButton(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: isDark ? Colors.white : const Color(0xFF1F2937),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1.5,
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        minimumSize: const Size(double.infinity, 48),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      ),
+      onPressed: onPressed,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 20,
+            height: 20,
+            child: CustomPaint(painter: GoogleLogoPainter()),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Google Logo Custom Painter
+class GoogleLogoPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double w = size.width;
+    final double h = size.height;
+    final Offset center = Offset(w / 2, h / 2);
+    final double radius = w / 2;
+
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = w * 0.22;
+
+    paint.color = const Color(0xFFEA4335);
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius * 0.78), -0.7, 1.8, false, paint);
+
+    paint.color = const Color(0xFFFBBC05);
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius * 0.78), 1.1, 1.2, false, paint);
+
+    paint.color = const Color(0xFF34A853);
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius * 0.78), 2.3, 1.4, false, paint);
+
+    paint.color = const Color(0xFF4285F4);
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius * 0.78), 3.7, 1.6, false, paint);
+
+    final linePaint = Paint()
+      ..color = const Color(0xFF4285F4)
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(Rect.fromLTWH(w * 0.45, h * 0.39, w * 0.52, h * 0.22), linePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ==================== OTP VERIFICATION MODAL ====================
+class OtpVerificationModal extends StatefulWidget {
+  final String email;
+  final String title;
+  final String subtitle;
+  final AppStrings strings;
+  final VoidCallback onVerified;
+
+  const OtpVerificationModal({
+    super.key,
+    required this.email,
+    required this.title,
+    required this.subtitle,
+    required this.strings,
+    required this.onVerified,
+  });
+
+  @override
+  State<OtpVerificationModal> createState() => _OtpVerificationModalState();
+}
+
+class _OtpVerificationModalState extends State<OtpVerificationModal> {
+  final List<TextEditingController> _controllers =
+      List.generate(4, (_) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
+
+  int _resendCountdown = 60;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    for (var c in _controllers) {
+      c.dispose();
+    }
+    for (var f in _focusNodes) {
+      f.dispose();
+    }
+    super.dispose();
+  }
+
+  void _startTimer() {
+    setState(() => _resendCountdown = 60);
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_resendCountdown > 0) {
+        if (mounted) setState(() => _resendCountdown--);
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  void _verifyOtp() {
+    final code = _controllers.map((c) => c.text).join();
+    if (code.length < 4) {
+      showAppToast(context, 'Mohon masukkan 4 digit kode OTP', isError: true);
+      return;
+    }
+    widget.onVerified();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+      ),
+      backgroundColor: isDark ? const Color(0xFF1E293B).withOpacity(0.95) : Colors.white.withOpacity(0.95),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: const BoxDecoration(
+                color: Color(0xFFEEF2FF),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.mark_email_read_rounded, color: Color(0xFF4F46E5), size: 30),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              widget.title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : const Color(0xFF0F172A),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              widget.subtitle,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+
+            // 4 Digit OTP Box
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: List.generate(4, (index) {
+                return SizedBox(
+                  width: 52,
+                  height: 56,
+                  child: TextField(
+                    controller: _controllers[index],
+                    focusNode: _focusNodes[index],
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    maxLength: 1,
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF4F46E5), width: 2),
+                      ),
                     ),
-                  ],
+                    onChanged: (val) {
+                      if (val.isNotEmpty && index < 3) {
+                        _focusNodes[index + 1].requestFocus();
+                      } else if (val.isEmpty && index > 0) {
+                        _focusNodes[index - 1].requestFocus();
+                      }
+                      if (_controllers.every((c) => c.text.isNotEmpty)) {
+                        _verifyOtp();
+                      }
+                    },
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 20),
+
+            // Resend Countdown
+            TextButton(
+              onPressed: _resendCountdown == 0
+                  ? () {
+                      _startTimer();
+                      showAppToast(context, 'Kode OTP baru telah dikirim ke ${widget.email}');
+                    }
+                  : null,
+              child: Text(
+                _resendCountdown > 0
+                    ? 'Kirim Ulang Kode ($_resendCountdown s)'
+                    : 'Kirim Ulang Kode OTP',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: _resendCountdown == 0 ? const Color(0xFF4F46E5) : Colors.grey,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
+            ),
+            const SizedBox(height: 12),
 
-              const SizedBox(height: 20),
-              TextButton.icon(
-                onPressed: widget.onContinueAsGuest,
-                icon: const Icon(Icons.person_outline_rounded, size: 18),
-                label: Text(widget.strings.continueAsGuest),
-              ),
-            ],
-          ),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(widget.strings.cancel),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFF4F46E5)),
+                    onPressed: _verifyOtp,
+                    child: const Text('Verifikasi'),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -550,7 +1031,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             elevation: 12,
             backgroundColor: isDark
-                ? const Color(0xFF1E293B).withOpacity(0.9)
+                ? const Color(0xFF1E293B).withOpacity(0.92)
                 : Colors.white.withOpacity(0.92),
             child: Padding(
               padding: const EdgeInsets.all(24),
@@ -616,32 +1097,158 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showAccountInfo(BuildContext context) {
+  // Combined Account Info & Change Password via OTP
+  void _showAccountInfoAndSecurity(BuildContext context) {
     _showBlurredModalDialog(
       context,
-      title: widget.strings.isEn ? 'Account Information' : 'Informasi Akun',
+      title: 'Informasi Akun & Keamanan',
       icon: Icons.person_outline_rounded,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildInfoRow(widget.strings.isEn ? 'Full Name' : 'Nama Lengkap', widget.user.name),
+          _buildInfoRow('Nama Lengkap', widget.user.name),
           const Divider(height: 20),
-          _buildInfoRow(widget.strings.isEn ? 'Email' : 'Alamat Email', widget.user.email),
+          _buildInfoRow('Alamat Email', widget.user.email),
           const Divider(height: 20),
-          _buildInfoRow(widget.strings.isEn ? 'Role' : 'Peran/Jabatan',
-              widget.strings.isEn ? 'Courier Staff' : 'Staf Kurir & Pengiriman'),
+          _buildInfoRow('Peran Staf', 'Staf Kurir & Logistik'),
           const Divider(height: 20),
-          _buildInfoRow(widget.strings.isEn ? 'Status' : 'Status Akun',
-              widget.strings.isEn ? 'Active & Verified' : 'Aktif & Terverifikasi'),
+          _buildInfoRow('Status Akun', 'Aktif & Terverifikasi'),
+          const SizedBox(height: 20),
+
+          // Security Badge Box
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEEF2FF),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: const [
+                Icon(Icons.shield_outlined, color: Color(0xFF4F46E5), size: 18),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Akun dilindungi enkripsi SSL/TLS & Otentikasi OTP.',
+                    style: TextStyle(fontSize: 11, color: Color(0xFF334155)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Action Button: Change Password via OTP Direct Screen Flow
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF4F46E5),
+              side: const BorderSide(color: Color(0xFF4F46E5), width: 1.5),
+              minimumSize: const Size(double.infinity, 44),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              _startChangePasswordOtpFlow(context);
+            },
+            icon: const Icon(Icons.lock_reset_rounded, size: 18),
+            label: const Text(
+              'Ganti Kata Sandi (via OTP Email)',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  // Flow Ganti Password -> OTP Modal -> Form Kata Sandi Baru
+  void _startChangePasswordOtpFlow(BuildContext context) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierLabel: 'OTP Password Reset',
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: OtpVerificationModal(
+            email: widget.user.email,
+            title: 'OTP Reset Kata Sandi',
+            subtitle: 'Masukkan 4 digit kode OTP yang dikirim ke email ${widget.user.email}',
+            strings: widget.strings,
+            onVerified: () {
+              Navigator.pop(context);
+              _showNewPasswordDialog(context);
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  void _showNewPasswordDialog(BuildContext context) {
+    final newPwdCtrl = TextEditingController();
+    final confirmPwdCtrl = TextEditingController();
+
+    _showBlurredModalDialog(
+      context,
+      title: 'Buat Kata Sandi Baru',
+      icon: Icons.key_rounded,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: newPwdCtrl,
+            obscureText: true,
+            decoration: InputDecoration(
+              hintText: 'Kata Sandi Baru',
+              prefixIcon: const Icon(Icons.lock_outline_rounded, size: 18),
+              isDense: true,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: confirmPwdCtrl,
+            obscureText: true,
+            decoration: InputDecoration(
+              hintText: 'Konfirmasi Kata Sandi Baru',
+              prefixIcon: const Icon(Icons.lock_reset_rounded, size: 18),
+              isDense: true,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        Expanded(
+          child: FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF4F46E5),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+            onPressed: () {
+              final newP = newPwdCtrl.text.trim();
+              final confP = confirmPwdCtrl.text.trim();
+              if (newP.isEmpty || newP != confP) {
+                showAppToast(context, 'Kata sandi tidak cocok!', isError: true);
+                return;
+              }
+              Navigator.pop(context);
+              showAppToast(context, 'Kata sandi berhasil diperbarui!');
+            },
+            child: const Text('Simpan Kata Sandi'),
+          ),
+        ),
+      ],
     );
   }
 
   void _showNotifications(BuildContext context) {
     _showBlurredModalDialog(
       context,
-      title: widget.strings.isEn ? 'Delivery Notifications' : 'Notifikasi Pengiriman',
+      title: 'Notifikasi Pengiriman',
       icon: Icons.notifications_none_rounded,
       content: StatefulBuilder(
         builder: (context, setModalState) {
@@ -651,13 +1258,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 activeColor: const Color(0xFF4F46E5),
-                title: Text(
-                  widget.strings.isEn ? 'Route Alerts' : 'Peringatan Rute & Lalu Lintas',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                title: const Text(
+                  'Peringatan Rute & Lalu Lintas',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                 ),
-                subtitle: Text(
-                  widget.strings.isEn ? 'Get real-time traffic updates' : 'Dapatkan pembaruan rute & macet real-time',
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                subtitle: const Text(
+                  'Dapatkan pembaruan rute & macet real-time',
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
                 ),
                 value: _routeAlerts,
                 onChanged: (val) {
@@ -669,13 +1276,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 activeColor: const Color(0xFF4F46E5),
-                title: Text(
-                  widget.strings.isEn ? 'Sound Alerts' : 'Suara Peringatan',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                title: const Text(
+                  'Suara Peringatan',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                 ),
-                subtitle: Text(
-                  widget.strings.isEn ? 'Play sound on new task/message' : 'Bunyikan nada saat ada tugas/pesan baru',
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                subtitle: const Text(
+                  'Bunyikan nada saat ada tugas/pesan baru',
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
                 ),
                 value: _soundAlerts,
                 onChanged: (val) {
@@ -687,13 +1294,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 activeColor: const Color(0xFF4F46E5),
-                title: Text(
-                  widget.strings.isEn ? 'Daily Email Summary' : 'Ringkasan Email Harian',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                title: const Text(
+                  'Ringkasan Email Harian',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                 ),
-                subtitle: Text(
-                  widget.strings.isEn ? 'Receive daily delivery logs' : 'Kirim ringkasan laporan ke email',
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                subtitle: const Text(
+                  'Kirim ringkasan laporan ke email',
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
                 ),
                 value: _emailDigest,
                 onChanged: (val) {
@@ -708,81 +1315,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showSecurity(BuildContext context) {
-    _showBlurredModalDialog(
-      context,
-      title: widget.strings.isEn ? 'Security & Password' : 'Keamanan & Kata Sandi',
-      icon: Icons.security_outlined,
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEEF2FF),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.shield_outlined, color: Color(0xFF4F46E5), size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    widget.strings.isEn
-                        ? 'Your account is protected with SSL/TLS encryption.'
-                        : 'Akun Anda dilindungi dengan enkripsi aman SSL/TLS.',
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF334155)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          ListTile(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            tileColor: Theme.of(context).cardColor,
-            leading: const Icon(Icons.lock_reset_rounded, color: Color(0xFF4F46E5)),
-            title: Text(
-              widget.strings.isEn ? 'Change Password' : 'Ubah Kata Sandi',
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(
-              widget.strings.isEn ? 'Send reset link to your email' : 'Kirim tautan atur ulang ke email',
-              style: const TextStyle(fontSize: 11, color: Colors.grey),
-            ),
-            trailing: const Icon(Icons.chevron_right, size: 20),
-            onTap: () {
-              Navigator.pop(context);
-              showAppToast(
-                context,
-                widget.strings.isEn ? 'Password reset link sent to email' : 'Tautan atur ulang sandi dikirim ke email',
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showHelpCenter(BuildContext context) {
     _showBlurredModalDialog(
       context,
-      title: widget.strings.isEn ? 'Help Center & Support' : 'Pusat Bantuan & Support',
+      title: 'Pusat Bantuan & Support',
       icon: Icons.help_outline_rounded,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            widget.strings.isEn ? 'Need assistance with Courier AI?' : 'Butuh bantuan penggunaan Asisten AI Kurir?',
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+          const Text(
+            'Butuh bantuan penggunaan Asisten AI Kurir?',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          Text(
-            widget.strings.isEn
-                ? 'Contact our 24/7 support team or email us at support@courier.ai for immediate help.'
-                : 'Hubungi tim dukungan 24/7 kami atau email ke support@courier.ai untuk bantuan langsung.',
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          const Text(
+            'Hubungi tim dukungan 24/7 kami atau email ke support@courier.ai untuk bantuan langsung.',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
           ),
           const SizedBox(height: 16),
           OutlinedButton.icon(
@@ -792,10 +1341,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             onPressed: () {
               Navigator.pop(context);
-              showAppToast(context, widget.strings.isEn ? 'Support ticket created' : 'Tiket bantuan telah dibuat');
+              showAppToast(context, 'Tiket bantuan telah dibuat!');
             },
             icon: const Icon(Icons.support_agent_rounded, size: 18),
-            label: Text(widget.strings.isEn ? 'Contact Customer Support' : 'Hubungi Tim Support'),
+            label: const Text('Hubungi Tim Support'),
           ),
         ],
       ),
@@ -828,30 +1377,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Center(
               child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 38,
-                    backgroundColor: widget.user.isGuest
-                        ? const Color(0xFFF1F5F9)
-                        : const Color(0xFFEEF2FF),
-                    child: widget.user.isGuest
-                        ? const Icon(Icons.person_outline_rounded,
-                            size: 40, color: Colors.grey)
-                        : Text(
-                            widget.user.name.substring(0, 1).toUpperCase(),
-                            style: const TextStyle(
-                              fontSize: 30,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF4F46E5),
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: widget.user.isGuest
+                          ? LinearGradient(colors: [Colors.grey.shade300, Colors.grey.shade400])
+                          : const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF818CF8)]),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (widget.user.isGuest ? Colors.grey : const Color(0xFF4F46E5))
+                              .withOpacity(0.25),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: widget.user.isGuest
+                          ? const Icon(Icons.person_outline_rounded, size: 40, color: Colors.white)
+                          : Text(
+                              widget.user.name.isNotEmpty
+                                  ? widget.user.name.substring(0, 1).toUpperCase()
+                                  : 'U',
+                              style: const TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
+                    ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   Text(
                     widget.user.name,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -861,74 +1422,80 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   if (!widget.user.isGuest) ...[
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
                         color: const Color(0xFFEEF2FF),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: const Color(0xFFC7D2FE),
-                        ),
+                        border: Border.all(color: const Color(0xFFC7D2FE)),
                       ),
-                      child: Text(
-                        widget.strings.isEn ? 'Verified Staff' : 'Staf Terverifikasi',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4F46E5),
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.verified_rounded, size: 14, color: Color(0xFF4F46E5)),
+                          SizedBox(width: 4),
+                          Text(
+                            'Staf Terverifikasi',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF4F46E5),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
 
             // Mode Tamu vs Akun Terdaftar
             if (widget.user.isGuest) ...[
-              // Tampilan Khusus Akun Guest
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isDark
-                        ? const Color(0xFF334155)
-                        : const Color(0xFFE2E8F0),
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                      blurRadius: 16,
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: [
-                    const Icon(Icons.lock_person_outlined,
-                        size: 44, color: Color(0xFF4F46E5)),
-                    const SizedBox(height: 12),
-                    Text(
-                      widget.strings.isEn ? 'Guest Mode Active' : 'Mode Tamu Aktif',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFEEF2FF),
+                        shape: BoxShape.circle,
                       ),
+                      child: const Icon(Icons.lock_person_outlined, size: 36, color: Color(0xFF4F46E5)),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      'Mode Tamu Aktif',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      widget.strings.isEn
-                          ? 'You are browsing in Guest Mode. Sign in to access full profile settings, chat history, and account features.'
-                          : 'Anda sedang menggunakan Mode Tamu. Silakan masuk ke akun Anda untuk mengakses fitur profil, riwayat chat, dan pengaturan akun.',
+                    const Text(
+                      'Anda sedang menggunakan Mode Tamu. Silakan masuk ke akun Anda untuk mengakses fitur profil penuh, riwayat chat, dan pengaturan akun.',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey, height: 1.4),
+                      style: TextStyle(fontSize: 12, color: Colors.grey, height: 1.5),
                     ),
                     const SizedBox(height: 20),
                     SizedBox(
                       width: double.infinity,
+                      height: 46,
                       child: FilledButton.icon(
                         style: FilledButton.styleFrom(
                           backgroundColor: const Color(0xFF4F46E5),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         onPressed: () {
                           Navigator.pop(context);
@@ -936,13 +1503,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             widget.onOpenLogin!();
                           }
                         },
-                        icon: const Icon(Icons.login_rounded, size: 20),
+                        icon: const Icon(Icons.login_rounded, size: 18),
                         label: Text(
                           widget.strings.login,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -950,60 +1514,71 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ] else ...[
-              // Tampilan Akun Sudah Login
-              Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(
-                    color: isDark
-                        ? const Color(0xFF334155)
-                        : const Color(0xFFE2E8F0),
+              // Menu Akun Terdaftar
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                      blurRadius: 16,
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: [
                     ListTile(
-                      leading: const Icon(Icons.person_outline_rounded,
-                          color: Color(0xFF4F46E5)),
-                      title: Text(widget.strings.isEn
-                          ? 'Account Information'
-                          : 'Informasi Akun'),
-                      trailing:
-                          const Icon(Icons.chevron_right, color: Colors.grey),
-                      onTap: () => _showAccountInfo(context),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                      ),
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFEEF2FF),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.person_outline_rounded, color: Color(0xFF4F46E5), size: 20),
+                      ),
+                      title: const Text('Informasi Akun & Keamanan', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      subtitle: const Text('Nama, email & ganti kata sandi', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                      trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+                      onTap: () => _showAccountInfoAndSecurity(context),
                     ),
-                    const Divider(height: 1),
+                    const Divider(height: 1, indent: 60),
                     ListTile(
-                      leading: const Icon(Icons.notifications_none_rounded,
-                          color: Color(0xFF4F46E5)),
-                      title: Text(widget.strings.isEn
-                          ? 'Delivery Notifications'
-                          : 'Notifikasi Pengiriman'),
-                      trailing:
-                          const Icon(Icons.chevron_right, color: Colors.grey),
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFEEF2FF),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.notifications_none_rounded, color: Color(0xFF4F46E5), size: 20),
+                      ),
+                      title: const Text('Notifikasi Pengiriman', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      subtitle: const Text('Peringatan rute & suara', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                      trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
                       onTap: () => _showNotifications(context),
                     ),
-                    const Divider(height: 1),
+                    const Divider(height: 1, indent: 60),
                     ListTile(
-                      leading: const Icon(Icons.security_outlined,
-                          color: Color(0xFF4F46E5)),
-                      title: Text(widget.strings.isEn
-                          ? 'Security & Password'
-                          : 'Keamanan & Kata Sandi'),
-                      trailing:
-                          const Icon(Icons.chevron_right, color: Colors.grey),
-                      onTap: () => _showSecurity(context),
-                    ),
-                    const Divider(height: 1),
-                    ListTile(
-                      leading: const Icon(Icons.help_outline_rounded,
-                          color: Color(0xFF4F46E5)),
-                      title: Text(widget.strings.isEn
-                          ? 'Help Center & Support'
-                          : 'Pusat Bantuan & Support'),
-                      trailing:
-                          const Icon(Icons.chevron_right, color: Colors.grey),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+                      ),
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFEEF2FF),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.help_outline_rounded, color: Color(0xFF4F46E5), size: 20),
+                      ),
+                      title: const Text('Pusat Bantuan & Support', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      subtitle: const Text('Bantuan 24/7 & customer service', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                      trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
                       onTap: () => _showHelpCenter(context),
                     ),
                   ],
@@ -1014,24 +1589,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               SizedBox(
                 width: double.infinity,
+                height: 48,
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red, width: 1.5),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    foregroundColor: Colors.redAccent,
+                    side: const BorderSide(color: Colors.redAccent, width: 1.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   onPressed: () {
                     Navigator.pop(context);
                     widget.onLogout();
                   },
-                  icon: const Icon(Icons.logout_rounded, size: 20),
-                  label: Text(
-                    widget.strings.logout,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                  icon: const Icon(Icons.logout_rounded, size: 18),
+                  label: Text(widget.strings.logout, style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -1127,7 +1697,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final newId = DateTime.now().millisecondsSinceEpoch.toString();
     final newSession = ChatSession(
       id: newId,
-      title: widget.strings.newChat.replaceAll('+ ', ''),
+      title: widget.strings.newChat,
       createdAt: DateTime.now(),
       messages: [],
     );
@@ -1227,16 +1797,14 @@ class _ChatScreenState extends State<ChatScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(widget.strings.renameChat),
           content: TextField(
             controller: controller,
             autofocus: true,
             decoration: InputDecoration(
               isDense: true,
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             ),
           ),
           actions: [
@@ -1245,9 +1813,7 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Text(widget.strings.cancel),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF4F46E5),
-              ),
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF4F46E5)),
               onPressed: () {
                 final newTitle = controller.text.trim();
                 if (newTitle.isNotEmpty) {
@@ -1267,8 +1833,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _shareSession(ChatSession session) {
-    Clipboard.setData(
-        ClipboardData(text: 'https://asisten-kurir.ai/chat/${session.id}'));
+    Clipboard.setData(ClipboardData(text: 'https://asisten-kurir.ai/chat/${session.id}'));
     showAppToast(context, widget.strings.chatShared);
   }
 
@@ -1289,8 +1854,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _activeHttpClient?.close();
     setState(() {
       _isStreaming = false;
-      if (_activeSession.messages.isNotEmpty &&
-          !_activeSession.messages.last.isUser) {
+      if (_activeSession.messages.isNotEmpty && !_activeSession.messages.last.isUser) {
         final lastMsg = _activeSession.messages.last;
         _activeSession.messages[_activeSession.messages.length - 1] =
             lastMsg.copyWith(
@@ -1422,7 +1986,6 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  // Voice Input Sheet
   void _showVoiceInputDialog() {
     showModalBottomSheet(
       context: context,
@@ -1437,10 +2000,7 @@ class _ChatScreenState extends State<ChatScreen> {
             children: [
               Text(
                 widget.strings.voiceInput,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
               Container(
@@ -1449,16 +2009,13 @@ class _ChatScreenState extends State<ChatScreen> {
                   color: Color(0xFFEEF2FF),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.mic_rounded,
-                  size: 40,
-                  color: Color(0xFF4F46E5),
-                ),
+                child: const Icon(Icons.mic_rounded, size: 40, color: Color(0xFF4F46E5)),
               ),
               const SizedBox(height: 12),
-              Text(widget.strings.listening,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, color: Color(0xFF4F46E5))),
+              Text(
+                widget.strings.listening,
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+              ),
               const SizedBox(height: 20),
               Row(
                 children: [
@@ -1471,9 +2028,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF4F46E5),
-                      ),
+                      style: FilledButton.styleFrom(backgroundColor: const Color(0xFF4F46E5)),
                       onPressed: () {
                         Navigator.pop(context);
                         _sendMessage(
@@ -1513,7 +2068,6 @@ class _ChatScreenState extends State<ChatScreen> {
       drawer: _buildDrawer(),
       body: Stack(
         children: [
-          // Content Area (Padded to avoid overlap with floating elements)
           Positioned.fill(
             child: Padding(
               padding: const EdgeInsets.only(top: 48, bottom: 84),
@@ -1523,7 +2077,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
 
-          // Floating Model Selector Pill at Top
+          // Floating Model Selector
           Positioned(
             top: 4,
             left: 0,
@@ -1531,7 +2085,7 @@ class _ChatScreenState extends State<ChatScreen> {
             child: _buildFloatingModelSelector(),
           ),
 
-          // Floating Invisible Glass Input Bar at Bottom
+          // Floating Input Bar
           Positioned(
             bottom: 0,
             left: 0,
@@ -1543,7 +2097,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Floating Model Selector Pill at Top
+  // Floating Model Selector Pill
   Widget _buildFloatingModelSelector() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentModel = _availableModels.firstWhere(
@@ -1578,8 +2132,8 @@ class _ChatScreenState extends State<ChatScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
             color: isDark
-                ? const Color(0xFF1E293B).withOpacity(0.88)
-                : Colors.white.withOpacity(0.88),
+                ? const Color(0xFF1E293B).withOpacity(0.92)
+                : Colors.white.withOpacity(0.92),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isDark
@@ -1606,8 +2160,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
               const SizedBox(width: 4),
-              const Icon(Icons.keyboard_arrow_down_rounded,
-                  size: 18, color: Color(0xFF4F46E5)),
+              const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Color(0xFF4F46E5)),
             ],
           ),
         ),
@@ -1642,12 +2195,8 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF1E293B)
-                      : const Color(0xFFF8FAFC),
-                  border: const Border(
-                    bottom: BorderSide(color: Color(0xFFE2E8F0)),
-                  ),
+                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                  border: const Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
                 ),
                 child: Row(
                   children: [
@@ -1655,7 +2204,9 @@ class _ChatScreenState extends State<ChatScreen> {
                       radius: 20,
                       backgroundColor: const Color(0xFFEEF2FF),
                       child: Text(
-                        widget.user.name.substring(0, 1).toUpperCase(),
+                        widget.user.name.isNotEmpty
+                            ? widget.user.name.substring(0, 1).toUpperCase()
+                            : 'U',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF4F46E5),
@@ -1669,15 +2220,11 @@ class _ChatScreenState extends State<ChatScreen> {
                         children: [
                           Text(
                             widget.user.name,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                           ),
                           Text(
                             widget.user.email,
-                            style: const TextStyle(
-                                fontSize: 11, color: Colors.grey),
+                            style: const TextStyle(fontSize: 11, color: Colors.grey),
                           ),
                         ],
                       ),
@@ -1688,7 +2235,7 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
 
-            // Button New Chat
+            // Button New Chat (Fixed single '+' sign)
             Padding(
               padding: const EdgeInsets.all(12),
               child: SizedBox(
@@ -1704,9 +2251,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     backgroundColor: const Color(0xFF4F46E5),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     elevation: 0,
                   ),
                 ),
@@ -1719,11 +2264,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   widget.strings.chatHistory,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
                 ),
               ),
             ),
@@ -1737,16 +2278,14 @@ class _ChatScreenState extends State<ChatScreen> {
                         child: Text(
                           widget.strings.guestNote,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                              fontSize: 12, color: Colors.grey),
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                       ),
                     )
                   : Column(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                           child: TextField(
                             controller: _searchController,
                             onChanged: (val) {
@@ -1757,14 +2296,10 @@ class _ChatScreenState extends State<ChatScreen> {
                             style: const TextStyle(fontSize: 12),
                             decoration: InputDecoration(
                               hintText: widget.strings.searchHistory,
-                              prefixIcon: const Icon(Icons.search_rounded,
-                                  size: 16, color: Colors.grey),
+                              prefixIcon: const Icon(Icons.search_rounded, size: 16, color: Colors.grey),
                               isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 6),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                             ),
                           ),
                         ),
@@ -1773,12 +2308,9 @@ class _ChatScreenState extends State<ChatScreen> {
                             builder: (context) {
                               final filtered = _sessions.where((s) {
                                 if (_searchQuery.isEmpty) return true;
-                                return s.title
-                                    .toLowerCase()
-                                    .contains(_searchQuery);
+                                return s.title.toLowerCase().contains(_searchQuery);
                               }).toList();
 
-                              // Sort pinned chats first
                               filtered.sort((a, b) {
                                 if (a.isPinned && !b.isPinned) return -1;
                                 if (!a.isPinned && b.isPinned) return 1;
@@ -1789,20 +2321,17 @@ class _ChatScreenState extends State<ChatScreen> {
                                 return Center(
                                   child: Text(
                                     widget.strings.noHistory,
-                                    style: const TextStyle(
-                                        fontSize: 12, color: Colors.grey),
+                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                                   ),
                                 );
                               }
 
                               return ListView.builder(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8),
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
                                 itemCount: filtered.length,
                                 itemBuilder: (context, index) {
                                   final session = filtered[index];
-                                  final isSelected =
-                                      session.id == _activeSessionId;
+                                  final isSelected = session.id == _activeSessionId;
 
                                   return ListTile(
                                     dense: true,
@@ -1812,9 +2341,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                           ? Icons.push_pin_rounded
                                           : Icons.chat_bubble_outline_rounded,
                                       size: 18,
-                                      color: session.isPinned
-                                          ? const Color(0xFF4F46E5)
-                                          : Colors.grey,
+                                      color: session.isPinned ? const Color(0xFF4F46E5) : Colors.grey,
                                     ),
                                     title: Text(
                                       session.title,
@@ -1828,11 +2355,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                       ),
                                     ),
                                     trailing: PopupMenuButton<String>(
-                                      icon: const Icon(Icons.more_vert_rounded,
-                                          size: 18, color: Colors.grey),
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(14)),
+                                      icon: const Icon(Icons.more_vert_rounded, size: 18, color: Colors.grey),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                                       onSelected: (action) {
                                         if (action == 'share') {
                                           _shareSession(session);
@@ -1849,13 +2373,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                           value: 'share',
                                           child: Row(
                                             children: [
-                                              const Icon(Icons.share_outlined,
-                                                  size: 18,
-                                                  color: Color(0xFF64748B)),
+                                              const Icon(Icons.share_outlined, size: 18, color: Color(0xFF64748B)),
                                               const SizedBox(width: 10),
-                                              Text(widget.strings.shareChat,
-                                                  style: const TextStyle(
-                                                      fontSize: 13)),
+                                              Text(widget.strings.shareChat, style: const TextStyle(fontSize: 13)),
                                             ],
                                           ),
                                         ),
@@ -1872,11 +2392,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                               ),
                                               const SizedBox(width: 10),
                                               Text(
-                                                session.isPinned
-                                                    ? widget.strings.unpinChat
-                                                    : widget.strings.pinChat,
-                                                style: const TextStyle(
-                                                    fontSize: 13),
+                                                session.isPinned ? widget.strings.unpinChat : widget.strings.pinChat,
+                                                style: const TextStyle(fontSize: 13),
                                               ),
                                             ],
                                           ),
@@ -1885,13 +2402,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                           value: 'rename',
                                           child: Row(
                                             children: [
-                                              const Icon(Icons.edit_outlined,
-                                                  size: 18,
-                                                  color: Color(0xFF64748B)),
+                                              const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF64748B)),
                                               const SizedBox(width: 10),
-                                              Text(widget.strings.renameChat,
-                                                  style: const TextStyle(
-                                                      fontSize: 13)),
+                                              Text(widget.strings.renameChat, style: const TextStyle(fontSize: 13)),
                                             ],
                                           ),
                                         ),
@@ -1900,15 +2413,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                           value: 'delete',
                                           child: Row(
                                             children: [
-                                              const Icon(
-                                                  Icons.delete_outline_rounded,
-                                                  size: 18,
-                                                  color: Colors.redAccent),
+                                              const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.redAccent),
                                               const SizedBox(width: 10),
-                                              Text(widget.strings.deleteChat,
-                                                  style: const TextStyle(
-                                                      color: Colors.redAccent,
-                                                      fontSize: 13)),
+                                              Text(widget.strings.deleteChat, style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
                                             ],
                                           ),
                                         ),
@@ -1931,32 +2438,20 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
             ),
 
-            // Bottom Section: Theme & Language & Login/Logout
+            // Bottom Section
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-              ),
+              decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFFE2E8F0)))),
               child: Column(
                 children: [
-                  // Dark Mode Switch
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
                         children: [
-                          Icon(
-                            isDark
-                                ? Icons.dark_mode_outlined
-                                : Icons.light_mode_outlined,
-                            size: 18,
-                            color: Colors.grey,
-                          ),
+                          Icon(isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined, size: 18, color: Colors.grey),
                           const SizedBox(width: 8),
-                          Text(
-                            widget.strings.darkMode,
-                            style: const TextStyle(fontSize: 13),
-                          ),
+                          Text(widget.strings.darkMode, style: const TextStyle(fontSize: 13)),
                         ],
                       ),
                       Switch(
@@ -1966,39 +2461,23 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ],
                   ),
-
-                  // Language Segmented Switcher
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.language_rounded,
-                              size: 18, color: Colors.grey),
+                          const Icon(Icons.language_rounded, size: 18, color: Colors.grey),
                           const SizedBox(width: 8),
-                          Text(
-                            widget.strings.appLanguage,
-                            style: const TextStyle(fontSize: 13),
-                          ),
+                          Text(widget.strings.appLanguage, style: const TextStyle(fontSize: 13)),
                         ],
                       ),
                       SegmentedButton<String>(
                         segments: const [
-                          ButtonSegment(
-                            value: 'id',
-                            label: Text('🇮🇩 ID',
-                                style: TextStyle(fontSize: 11)),
-                          ),
-                          ButtonSegment(
-                            value: 'en',
-                            label: Text('🇬🇧 EN',
-                                style: TextStyle(fontSize: 11)),
-                          ),
+                          ButtonSegment(value: 'id', label: Text('🇮🇩 ID', style: TextStyle(fontSize: 11))),
+                          ButtonSegment(value: 'en', label: Text('🇬🇧 EN', style: TextStyle(fontSize: 11))),
                         ],
                         selected: {widget.language},
-                        onSelectionChanged: (selection) {
-                          widget.onChangeLanguage(selection.first);
-                        },
+                        onSelectionChanged: (selection) => widget.onChangeLanguage(selection.first),
                         style: const ButtonStyle(
                           visualDensity: VisualDensity.compact,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -2008,39 +2487,26 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   const SizedBox(height: 4),
 
-                  // Login vs Logout Button
                   if (widget.user.isGuest)
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.login_rounded,
-                          color: Color(0xFF4F46E5)),
+                      leading: const Icon(Icons.login_rounded, color: Color(0xFF4F46E5)),
                       title: Text(
                         widget.strings.login,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF4F46E5),
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: const TextStyle(fontSize: 13, color: Color(0xFF4F46E5), fontWeight: FontWeight.bold),
                       ),
                       onTap: () {
                         Navigator.pop(context);
-                        if (widget.onOpenLogin != null) {
-                          widget.onOpenLogin!();
-                        }
+                        if (widget.onOpenLogin != null) widget.onOpenLogin!();
                       },
                     )
                   else
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.logout_rounded,
-                          color: Colors.redAccent),
+                      leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
                       title: Text(
                         widget.strings.logout,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Colors.redAccent,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: const TextStyle(fontSize: 13, color: Colors.redAccent, fontWeight: FontWeight.w500),
                       ),
                       onTap: () {
                         Navigator.pop(context);
@@ -2067,10 +2533,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ]
         : [
             {'icon': '📍', 'text': 'Bantu cari rute pengiriman tercepat'},
-            {
-              'icon': '📝',
-              'text': 'Buat draf pesan konfirmasi ke penerima paket'
-            },
+            {'icon': '📝', 'text': 'Buat draf pesan konfirmasi ke penerima paket'},
             {'icon': '📦', 'text': 'Cara atur jadwal ulang pengiriman paket'},
             {'icon': '❓', 'text': 'Bantu jawab pertanyaan umum pelanggan'},
           ];
@@ -2082,63 +2545,52 @@ class _ChatScreenState extends State<ChatScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: Color(0xFFEEF2FF),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEEF2FF),
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(color: const Color(0xFF4F46E5).withOpacity(0.15), blurRadius: 16, offset: const Offset(0, 4)),
+                ],
               ),
-              child: const Icon(
-                Icons.local_shipping_rounded,
-                size: 40,
-                color: Color(0xFF4F46E5),
-              ),
+              child: const Icon(Icons.local_shipping_rounded, size: 42, color: Color(0xFF4F46E5)),
             ),
-            const SizedBox(height: 16),
-            Text(
-              widget.strings.welcomeTitle,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            const SizedBox(height: 18),
+            Text(widget.strings.welcomeTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 6),
-            Text(
-              widget.strings.welcomeSub,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, color: Colors.grey),
-            ),
+            Text(widget.strings.welcomeSub, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: Colors.grey)),
             const SizedBox(height: 24),
             Wrap(
-              spacing: 10,
-              runSpacing: 10,
+              spacing: 12,
+              runSpacing: 12,
               alignment: WrapAlignment.center,
               children: prompts.map((p) {
                 return InkWell(
                   onTap: () => _sendMessage(customPrompt: p['text']),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                   child: Container(
-                    width: MediaQuery.of(context).size.width > 600 ? 240 : 150,
-                    padding: const EdgeInsets.all(12),
+                    width: MediaQuery.of(context).size.width > 600 ? 240 : 155,
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: Theme.of(context).brightness == Brightness.dark
                             ? const Color(0xFF334155)
                             : const Color(0xFFE2E8F0),
                       ),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2)),
+                      ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(p['icon']!, style: const TextStyle(fontSize: 20)),
-                        const SizedBox(height: 6),
+                        Text(p['icon']!, style: const TextStyle(fontSize: 22)),
+                        const SizedBox(height: 8),
                         Text(
                           p['text']!,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -2166,29 +2618,18 @@ class _ChatScreenState extends State<ChatScreen> {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 6),
           child: Column(
-            crossAxisAlignment: msg.isUser
-                ? CrossAxisAlignment.end
-                : CrossAxisAlignment.start,
+            crossAxisAlignment: msg.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: msg.isUser
-                    ? MainAxisAlignment.end
-                    : MainAxisAlignment.start,
+                mainAxisAlignment: msg.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (!msg.isUser) ...[
                     Container(
                       margin: const EdgeInsets.only(right: 8, top: 2),
                       padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFEEF2FF),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.smart_toy_rounded,
-                        color: Color(0xFF4F46E5),
-                        size: 16,
-                      ),
+                      decoration: const BoxDecoration(color: Color(0xFFEEF2FF), shape: BoxShape.circle),
+                      child: const Icon(Icons.smart_toy_rounded, color: Color(0xFF4F46E5), size: 16),
                     ),
                   ],
                   Flexible(
@@ -2204,8 +2645,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         border: msg.isUser
                             ? null
                             : Border.all(
-                                color: Theme.of(context).brightness ==
-                                        Brightness.dark
+                                color: Theme.of(context).brightness == Brightness.dark
                                     ? const Color(0xFF334155)
                                     : const Color(0xFFE2E8F0),
                               ),
@@ -2216,20 +2656,13 @@ class _ChatScreenState extends State<ChatScreen> {
                           if (msg.isUser)
                             Text(
                               msg.text,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.white,
-                              ),
+                              style: const TextStyle(fontSize: 14, color: Colors.white),
                             )
                           else ...[
                             if (msg.status == 'processing')
                               Text(
                                 widget.strings.processing,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey,
-                                  fontStyle: FontStyle.italic,
-                                ),
+                                style: const TextStyle(fontSize: 13, color: Colors.grey, fontStyle: FontStyle.italic),
                               )
                             else
                               MarkdownBody(
@@ -2238,8 +2671,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 styleSheet: MarkdownStyleSheet(
                                   p: TextStyle(
                                     fontSize: 14,
-                                    color: Theme.of(context).brightness ==
-                                            Brightness.dark
+                                    color: Theme.of(context).brightness == Brightness.dark
                                         ? Colors.white
                                         : const Color(0xFF1E293B),
                                   ),
@@ -2259,98 +2691,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Attachment Sheet
-  void _showAttachmentSheet() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                widget.language == 'en'
-                    ? 'Attach File / Photo'
-                    : 'Lampirkan Berkas / Foto',
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildAttachOption(
-                    icon: Icons.camera_alt_outlined,
-                    label: widget.language == 'en' ? 'Camera' : 'Kamera',
-                    onTap: () {
-                      Navigator.pop(context);
-                      showAppToast(context, widget.language == 'en'
-                          ? 'Photo attached'
-                          : 'Foto berhasil dilampirkan');
-                    },
-                  ),
-                  _buildAttachOption(
-                    icon: Icons.image_outlined,
-                    label: widget.language == 'en' ? 'Gallery' : 'Galeri',
-                    onTap: () {
-                      Navigator.pop(context);
-                      showAppToast(context, widget.language == 'en'
-                          ? 'Image selected'
-                          : 'Gambar berhasil dipilih');
-                    },
-                  ),
-                  _buildAttachOption(
-                    icon: Icons.location_on_outlined,
-                    label: widget.language == 'en' ? 'Location' : 'Lokasi Paket',
-                    onTap: () {
-                      Navigator.pop(context);
-                      showAppToast(context, widget.language == 'en'
-                          ? 'Location attached'
-                          : 'Lokasi berhasil dilampirkan');
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildAttachOption({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(
-                color: Color(0xFFEEF2FF),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: const Color(0xFF4F46E5), size: 24),
-            ),
-            const SizedBox(height: 6),
-            Text(label, style: const TextStyle(fontSize: 12)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Floating Invisible Glass Input Bar
+  // Floating Input Bar
   Widget _buildInputBar() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -2358,14 +2699,10 @@ class _ChatScreenState extends State<ChatScreen> {
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF1E293B).withOpacity(0.88)
-            : Colors.white.withOpacity(0.88),
+        color: isDark ? const Color(0xFF1E293B).withOpacity(0.9) : Colors.white.withOpacity(0.92),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.12)
-              : const Color(0xFFE2E8F0).withOpacity(0.8),
+          color: isDark ? Colors.white.withOpacity(0.12) : const Color(0xFFE2E8F0).withOpacity(0.8),
         ),
         boxShadow: [
           BoxShadow(
@@ -2392,14 +2729,6 @@ class _ChatScreenState extends State<ChatScreen> {
           Row(
             children: [
               IconButton(
-                onPressed: _showAttachmentSheet,
-                icon: const Icon(Icons.attach_file_rounded),
-                color: const Color(0xFF4F46E5),
-                tooltip: widget.language == 'en'
-                    ? 'Attach File'
-                    : 'Lampirkan Berkas',
-              ),
-              IconButton(
                 onPressed: _showVoiceInputDialog,
                 icon: const Icon(Icons.mic_none_rounded),
                 color: const Color(0xFF4F46E5),
@@ -2417,10 +2746,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     hintStyle: const TextStyle(color: Colors.grey),
                     border: InputBorder.none,
                     isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 8,
-                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                   ),
                 ),
               ),
