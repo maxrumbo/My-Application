@@ -1598,6 +1598,161 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildProfileContent(bool isDark) {
+    if (widget.user.isGuest) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+              blurRadius: 16,
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: const BoxDecoration(
+                color: Color(0xFFEEF2FF),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.lock_person_outlined, size: 36, color: Color(0xFF4F46E5)),
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'Mode Tamu Aktif',
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Anda sedang menggunakan Mode Tamu. Silakan masuk ke akun Anda untuk mengakses fitur profil penuh, riwayat chat, dan pengaturan akun.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: Colors.grey, height: 1.5),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 46,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF4F46E5),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  if (widget.onOpenLogin != null) {
+                    widget.onOpenLogin!();
+                  }
+                },
+                icon: const Icon(Icons.login_rounded, size: 18),
+                label: Text(
+                  widget.strings.login,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                blurRadius: 16,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFEEF2FF),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.person_outline_rounded, color: Color(0xFF4F46E5), size: 20),
+                  ),
+                  title: const Text('Informasi Akun & Keamanan', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Nama, email & ganti kata sandi', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                  trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+                  onTap: () => _showAccountInfoAndSecurity(context),
+                ),
+                const Divider(height: 1, indent: 60),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFEEF2FF),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.notifications_none_rounded, color: Color(0xFF4F46E5), size: 20),
+                  ),
+                  title: const Text('Notifikasi Pengiriman', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Peringatan rute & suara', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                  trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+                  onTap: () => _showNotifications(context),
+                ),
+                const Divider(height: 1, indent: 60),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFEEF2FF),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.help_outline_rounded, color: Color(0xFF4F46E5), size: 20),
+                  ),
+                  title: const Text('Pusat Bantuan & Support', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Kontak direct WhatsApp, Email & Telepon Dev', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                  trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+                  onTap: () => _showHelpCenter(context),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 32),
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.redAccent,
+              side: const BorderSide(color: Colors.redAccent, width: 1.5),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              widget.onLogout();
+            },
+            icon: const Icon(Icons.logout_rounded, size: 18),
+            label: Text(widget.strings.logout, style: const TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -1687,157 +1842,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 28),
 
-            if (widget.user.isGuest) ...[
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
-                      blurRadius: 16,
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFEEF2FF),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.lock_person_outlined, size: 36, color: Color(0xFF4F46E5)),
-                    ),
-                    const SizedBox(height: 14),
-                    const Text(
-                      'Mode Tamu Aktif',
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Anda sedang menggunakan Mode Tamu. Silakan masuk ke akun Anda untuk mengakses fitur profil penuh, riwayat chat, dan pengaturan akun.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: Colors.grey, height: 1.5),
-                    ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 46,
-                      child: FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF4F46E5),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          if (widget.onOpenLogin != null) {
-                            widget.onOpenLogin!();
-                          }
-                        },
-                        icon: const Icon(Icons.login_rounded, size: 18),
-                        label: Text(
-                          widget.strings.login,
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ] else ...[
-              Container(
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
-                      blurRadius: 16,
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Column(
-                    children: [
-                      ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFEEF2FF),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.person_outline_rounded, color: Color(0xFF4F46E5), size: 20),
-                        ),
-                        title: const Text('Informasi Akun & Keamanan', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                        subtitle: const Text('Nama, email & ganti kata sandi', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                        trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-                        onTap: () => _showAccountInfoAndSecurity(context),
-                      ),
-                      const Divider(height: 1, indent: 60),
-                      ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFEEF2FF),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.notifications_none_rounded, color: Color(0xFF4F46E5), size: 20),
-                        ),
-                        title: const Text('Notifikasi Pengiriman', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                        subtitle: const Text('Peringatan rute & suara', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                        trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-                        onTap: () => _showNotifications(context),
-                      ),
-                      const Divider(height: 1, indent: 60),
-                      ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFEEF2FF),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.help_outline_rounded, color: Color(0xFF4F46E5), size: 20),
-                        ),
-                        title: const Text('Pusat Bantuan & Support', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                        subtitle: const Text('Kontak direct WhatsApp, Email & Telepon Dev', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                        trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-                        onTap: () => _showHelpCenter(context),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.redAccent,
-                    side: const BorderSide(color: Colors.redAccent, width: 1.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    widget.onLogout();
-                  },
-                  icon: const Icon(Icons.logout_rounded, size: 18),
-                  label: Text(widget.strings.logout, style: const TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
-          ),
+            _buildProfileContent(isDark),
+          ],
         ),
       ),
     );
