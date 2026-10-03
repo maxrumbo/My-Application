@@ -1764,59 +1764,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ],
                 ),
-                child: Column(
-                  children: [
-                    ListTile(
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                      ),
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFEEF2FF),
-                          shape: BoxShape.circle,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Column(
+                    children: [
+                      ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFEEF2FF),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.person_outline_rounded, color: Color(0xFF4F46E5), size: 20),
                         ),
-                        child: const Icon(Icons.person_outline_rounded, color: Color(0xFF4F46E5), size: 20),
+                        title: const Text('Informasi Akun & Keamanan', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        subtitle: const Text('Nama, email & ganti kata sandi', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                        trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+                        onTap: () => _showAccountInfoAndSecurity(context),
                       ),
-                      title: const Text('Informasi Akun & Keamanan', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                      subtitle: const Text('Nama, email & ganti kata sandi', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                      trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-                      onTap: () => _showAccountInfoAndSecurity(context),
-                    ),
-                    const Divider(height: 1, indent: 60),
-                    ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFEEF2FF),
-                          shape: BoxShape.circle,
+                      const Divider(height: 1, indent: 60),
+                      ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFEEF2FF),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.notifications_none_rounded, color: Color(0xFF4F46E5), size: 20),
                         ),
-                        child: const Icon(Icons.notifications_none_rounded, color: Color(0xFF4F46E5), size: 20),
+                        title: const Text('Notifikasi Pengiriman', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        subtitle: const Text('Peringatan rute & suara', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                        trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+                        onTap: () => _showNotifications(context),
                       ),
-                      title: const Text('Notifikasi Pengiriman', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                      subtitle: const Text('Peringatan rute & suara', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                      trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-                      onTap: () => _showNotifications(context),
-                    ),
-                    const Divider(height: 1, indent: 60),
-                    ListTile(
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-                      ),
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFEEF2FF),
-                          shape: BoxShape.circle,
+                      const Divider(height: 1, indent: 60),
+                      ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFEEF2FF),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.help_outline_rounded, color: Color(0xFF4F46E5), size: 20),
                         ),
-                        child: const Icon(Icons.help_outline_rounded, color: Color(0xFF4F46E5), size: 20),
+                        title: const Text('Pusat Bantuan & Support', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        subtitle: const Text('Kontak direct WhatsApp, Email & Telepon Dev', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                        trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+                        onTap: () => _showHelpCenter(context),
                       ),
-                      title: const Text('Pusat Bantuan & Support', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                      subtitle: const Text('Kontak direct WhatsApp, Email & Telepon Dev', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                      trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-                      onTap: () => _showHelpCenter(context),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
 
