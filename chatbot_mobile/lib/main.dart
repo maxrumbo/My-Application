@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 
 void main() {
   runApp(const ChatbotApp());
@@ -1038,7 +1039,7 @@ class _HelpCenterModalState extends State<HelpCenterModal> {
               ),
               const SizedBox(height: 20),
 
-              // Opsi 1: Direct Contact Tiles (WhatsApp / Email / Call Center)
+              // Opsi 1: Direct Contact Logo Buttons
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
@@ -1046,51 +1047,55 @@ class _HelpCenterModalState extends State<HelpCenterModal> {
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade500),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
 
-              // WhatsApp Tile
-              _buildContactTile(
-                isDark: isDark,
-                icon: Icons.chat_rounded,
-                iconColor: const Color(0xFF25D366),
-                title: 'WhatsApp Support',
-                subtitle: '+62 812-3456-7890 (Direct Developer)',
-                badgeText: 'Fast Response',
-                onTap: () {
-                  Navigator.pop(context);
-                  showAppToast(context, 'Membuka WhatsApp Developer...');
-                },
-              ),
-              const SizedBox(height: 8),
-
-              // Email Tile
-              _buildContactTile(
-                isDark: isDark,
-                icon: Icons.email_rounded,
-                iconColor: const Color(0xFF4F46E5),
-                title: 'Email Developer',
-                subtitle: 'support@courier.ai / dev@myproject.ai',
-                badgeText: 'Email Direct',
-                onTap: () {
-                  Clipboard.setData(const ClipboardData(text: 'support@courier.ai'));
-                  Navigator.pop(context);
-                  showAppToast(context, 'Email developer disalin ke clipboard!');
-                },
-              ),
-              const SizedBox(height: 8),
-
-              // Hotline Call Center Tile
-              _buildContactTile(
-                isDark: isDark,
-                icon: Icons.phone_in_talk_rounded,
-                iconColor: const Color(0xFF0284C7),
-                title: 'Hotline Call Center',
-                subtitle: '1500-123 (Bebas Pulsa 24/7)',
-                badgeText: '24/7 Call',
-                onTap: () {
-                  Navigator.pop(context);
-                  showAppToast(context, 'Menghubungi Call Center 1500-123...');
-                },
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildDirectLogoButton(
+                    isDark: isDark,
+                    color: const Color(0xFF25D366),
+                    icon: Icons.chat_rounded,
+                    label: 'WhatsApp',
+                    onTap: () async {
+                      final uri = Uri.parse('https://wa.me/6281234567890?text=Halo%20Developer%20Asisten%20Kurir,%20saya%20butuh%20bantuan.');
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      } else {
+                        showAppToast(context, 'Membuka WhatsApp (+62 812-3456-7890)...');
+                      }
+                    },
+                  ),
+                  _buildDirectLogoButton(
+                    isDark: isDark,
+                    color: const Color(0xFF4F46E5),
+                    icon: Icons.email_rounded,
+                    label: 'Email Dev',
+                    onTap: () async {
+                      final uri = Uri.parse('mailto:support@courier.ai?subject=Bantuan%20Asisten%20Kurir');
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      } else {
+                        Clipboard.setData(const ClipboardData(text: 'support@courier.ai'));
+                        showAppToast(context, 'Email support@courier.ai disalin!');
+                      }
+                    },
+                  ),
+                  _buildDirectLogoButton(
+                    isDark: isDark,
+                    color: const Color(0xFF0284C7),
+                    icon: Icons.phone_in_talk_rounded,
+                    label: 'Telepon',
+                    onTap: () async {
+                      final uri = Uri.parse('tel:1500123');
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      } else {
+                        showAppToast(context, 'Menghubungi Call Center 1500-123...');
+                      }
+                    },
+                  ),
+                ],
               ),
 
               const SizedBox(height: 20),
@@ -1172,52 +1177,56 @@ class _HelpCenterModalState extends State<HelpCenterModal> {
     );
   }
 
-  Widget _buildContactTile({
+  Widget _buildDirectLogoButton({
     required bool isDark,
+    required Color color,
     required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String subtitle,
-    required String badgeText,
+    required String label,
     required VoidCallback onTap,
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(18),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        width: 88,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: color.withOpacity(0.25), width: 1.2),
         ),
-        child: Row(
+        child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.12),
+                color: color,
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withOpacity(0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              child: Icon(icon, color: iconColor, size: 20),
+              child: Icon(icon, color: Colors.white, size: 24),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: iconColor.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          badgeText,
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : const Color(0xFF0F172A),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
                           style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: iconColor),
                         ),
                       ),
