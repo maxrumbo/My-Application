@@ -334,7 +334,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   }
 }
 
-// ==================== AUTH SCREEN (LOGIN & REGISTER & GOOGLE) ====================
+// ==================== AUTH SCREEN ====================
 class AuthScreen extends StatefulWidget {
   final AppStrings strings;
   final Function(String email, {String? displayName}) onAuthSuccess;
@@ -373,7 +373,6 @@ class _AuthScreenState extends State<AuthScreen> {
     }
 
     if (_isRegisterTab) {
-      // Direct to OTP Verification for Registration
       _showOtpDialog(
         email: email,
         title: 'Verifikasi Email Pendaftaran',
@@ -384,7 +383,6 @@ class _AuthScreenState extends State<AuthScreen> {
         },
       );
     } else {
-      // Login Direct
       widget.onAuthSuccess(email);
       showAppToast(context, 'Selamat datang kembali!');
     }
@@ -498,7 +496,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   child: Column(
                     children: [
-                      // Toggle Segmented (Masuk | Daftar)
+                      // Segmented Tab
                       Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
@@ -518,12 +516,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                         : Colors.transparent,
                                     borderRadius: BorderRadius.circular(10),
                                     boxShadow: !_isRegisterTab
-                                        ? [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(0.06),
-                                              blurRadius: 4,
-                                            )
-                                          ]
+                                        ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4)]
                                         : [],
                                   ),
                                   child: Text(
@@ -532,9 +525,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13,
-                                      color: !_isRegisterTab
-                                          ? const Color(0xFF4F46E5)
-                                          : Colors.grey,
+                                      color: !_isRegisterTab ? const Color(0xFF4F46E5) : Colors.grey,
                                     ),
                                   ),
                                 ),
@@ -551,12 +542,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                         : Colors.transparent,
                                     borderRadius: BorderRadius.circular(10),
                                     boxShadow: _isRegisterTab
-                                        ? [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(0.06),
-                                              blurRadius: 4,
-                                            )
-                                          ]
+                                        ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4)]
                                         : [],
                                   ),
                                   child: Text(
@@ -565,9 +551,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13,
-                                      color: _isRegisterTab
-                                          ? const Color(0xFF4F46E5)
-                                          : Colors.grey,
+                                      color: _isRegisterTab ? const Color(0xFF4F46E5) : Colors.grey,
                                     ),
                                   ),
                                 ),
@@ -578,7 +562,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Google Sign In Button
+                      // Google Sign In
                       _buildGoogleButton(
                         isDark: isDark,
                         onPressed: _handleGoogleSignIn,
@@ -677,7 +661,6 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                       const SizedBox(height: 22),
 
-                      // Submit Action Button
                       SizedBox(
                         width: double.infinity,
                         height: 48,
@@ -752,7 +735,6 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 }
 
-// Google Logo Custom Painter
 class GoogleLogoPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -809,8 +791,7 @@ class OtpVerificationModal extends StatefulWidget {
 }
 
 class _OtpVerificationModalState extends State<OtpVerificationModal> {
-  final List<TextEditingController> _controllers =
-      List.generate(4, (_) => TextEditingController());
+  final List<TextEditingController> _controllers = List.generate(4, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
 
   int _resendCountdown = 60;
@@ -896,7 +877,6 @@ class _OtpVerificationModalState extends State<OtpVerificationModal> {
             ),
             const SizedBox(height: 24),
 
-            // 4 Digit OTP Box
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: List.generate(4, (index) {
@@ -935,7 +915,6 @@ class _OtpVerificationModalState extends State<OtpVerificationModal> {
             ),
             const SizedBox(height: 20),
 
-            // Resend Countdown
             TextButton(
               onPressed: _resendCountdown == 0
                   ? () {
@@ -974,6 +953,282 @@ class _OtpVerificationModalState extends State<OtpVerificationModal> {
                 ),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ==================== PUSAT BANTUAN & SUPPORT MODAL (DIRECT CONTACT DEVELOPER) ====================
+class HelpCenterModal extends StatefulWidget {
+  const HelpCenterModal({super.key});
+
+  @override
+  State<HelpCenterModal> createState() => _HelpCenterModalState();
+}
+
+class _HelpCenterModalState extends State<HelpCenterModal> {
+  String _selectedCategory = 'rute';
+  final _messageController = TextEditingController();
+
+  final List<Map<String, String>> _categories = [
+    {'id': 'rute', 'label': '📦 Kendala Rute & Paket'},
+    {'id': 'akun', 'label': '🔑 Akun & Login'},
+    {'id': 'bug', 'label': '🐛 Lapor Bug Aplikasi'},
+    {'id': 'saran', 'label': '💡 Saran & Feedback'},
+  ];
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  void _submitComplaint() {
+    final text = _messageController.text.trim();
+    if (text.isEmpty) {
+      showAppToast(context, 'Mohon tuliskan detail keluhan Anda', isError: true);
+      return;
+    }
+    Navigator.pop(context);
+    showAppToast(context, 'Keluhan berhasil terkirim langsung ke Developer!');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+      ),
+      elevation: 12,
+      backgroundColor: isDark ? const Color(0xFF1E293B).withOpacity(0.95) : Colors.white.withOpacity(0.95),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFEEF2FF),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.support_agent_rounded, color: Color(0xFF4F46E5), size: 30),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Pusat Bantuan & Kontak Developer',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Pilih saluran komunikasi langsung dengan tim pengembang',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              const SizedBox(height: 20),
+
+              // Opsi 1: Direct Contact Tiles (WhatsApp / Email / Call Center)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'HUBUNGI LANGSUNG DEVELOPER',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade500),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // WhatsApp Tile
+              _buildContactTile(
+                isDark: isDark,
+                icon: Icons.chat_rounded,
+                iconColor: const Color(0xFF25D366),
+                title: 'WhatsApp Support',
+                subtitle: '+62 812-3456-7890 (Direct Developer)',
+                badgeText: 'Fast Response',
+                onTap: () {
+                  Navigator.pop(context);
+                  showAppToast(context, 'Membuka WhatsApp Developer...');
+                },
+              ),
+              const SizedBox(height: 8),
+
+              // Email Tile
+              _buildContactTile(
+                isDark: isDark,
+                icon: Icons.email_rounded,
+                iconColor: const Color(0xFF4F46E5),
+                title: 'Email Developer',
+                subtitle: 'support@courier.ai / dev@myproject.ai',
+                badgeText: 'Email Direct',
+                onTap: () {
+                  Clipboard.setData(const ClipboardData(text: 'support@courier.ai'));
+                  Navigator.pop(context);
+                  showAppToast(context, 'Email developer disalin ke clipboard!');
+                },
+              ),
+              const SizedBox(height: 8),
+
+              // Hotline Call Center Tile
+              _buildContactTile(
+                isDark: isDark,
+                icon: Icons.phone_in_talk_rounded,
+                iconColor: const Color(0xFF0284C7),
+                title: 'Hotline Call Center',
+                subtitle: '1500-123 (Bebas Pulsa 24/7)',
+                badgeText: '24/7 Call',
+                onTap: () {
+                  Navigator.pop(context);
+                  showAppToast(context, 'Menghubungi Call Center 1500-123...');
+                },
+              ),
+
+              const SizedBox(height: 20),
+              Divider(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+              const SizedBox(height: 12),
+
+              // Opsi 2: Form Keluhan Beragam Kategori
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'ATAU KIRIM DETAIL KELUHAN',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade500),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Kategori Chips
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: _categories.map((cat) {
+                  final isSelected = cat['id'] == _selectedCategory;
+                  return ChoiceChip(
+                    label: Text(cat['label']!, style: const TextStyle(fontSize: 11)),
+                    selected: isSelected,
+                    selectedColor: const Color(0xFFEEF2FF),
+                    labelStyle: TextStyle(
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected ? const Color(0xFF4F46E5) : (isDark ? Colors.white70 : Colors.black87),
+                    ),
+                    onSelected: (_) => setState(() => _selectedCategory = cat['id']!),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 10),
+
+              TextField(
+                controller: _messageController,
+                minLines: 2,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: 'Tuliskan detail keluhan/masalah Anda di sini...',
+                  hintStyle: const TextStyle(fontSize: 12, color: Colors.grey),
+                  isDense: true,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Batal'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF4F46E5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: _submitComplaint,
+                      icon: const Icon(Icons.send_rounded, size: 16),
+                      label: const Text('Kirim Pesan', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContactTile({
+    required bool isDark,
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required String badgeText,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: iconColor.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          badgeText,
+                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: iconColor),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
           ],
         ),
       ),
@@ -1097,7 +1352,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Combined Account Info & Change Password via OTP
   void _showAccountInfoAndSecurity(BuildContext context) {
     _showBlurredModalDialog(
       context,
@@ -1115,7 +1369,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _buildInfoRow('Status Akun', 'Aktif & Terverifikasi'),
           const SizedBox(height: 20),
 
-          // Security Badge Box
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -1137,7 +1390,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Action Button: Change Password via OTP Direct Screen Flow
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF4F46E5),
@@ -1160,7 +1412,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Flow Ganti Password -> OTP Modal -> Form Kata Sandi Baru
   void _startChangePasswordOtpFlow(BuildContext context) {
     showGeneralDialog(
       context: context,
@@ -1316,38 +1567,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showHelpCenter(BuildContext context) {
-    _showBlurredModalDialog(
-      context,
-      title: 'Pusat Bantuan & Support',
-      icon: Icons.help_outline_rounded,
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Butuh bantuan penggunaan Asisten AI Kurir?',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Hubungi tim dukungan 24/7 kami atau email ke support@courier.ai untuk bantuan langsung.',
-            style: TextStyle(fontSize: 12, color: Colors.grey),
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 44),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              showAppToast(context, 'Tiket bantuan telah dibuat!');
-            },
-            icon: const Icon(Icons.support_agent_rounded, size: 18),
-            label: const Text('Hubungi Tim Support'),
-          ),
-        ],
-      ),
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'HelpCenter',
+      barrierColor: Colors.black.withOpacity(0.4),
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (context, anim1, anim2) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: const HelpCenterModal(),
+        );
+      },
+      transitionBuilder: (context, anim1, anim2, child) {
+        return Transform.scale(
+          scale: Curves.easeOutBack.transform(anim1.value),
+          child: FadeTransition(opacity: anim1, child: child),
+        );
+      },
     );
   }
 
@@ -1450,7 +1687,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 28),
 
-            // Mode Tamu vs Akun Terdaftar
             if (widget.user.isGuest) ...[
               Container(
                 padding: const EdgeInsets.all(24),
@@ -1514,7 +1750,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ] else ...[
-              // Menu Akun Terdaftar
               Container(
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF1E293B) : Colors.white,
@@ -1577,7 +1812,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: const Icon(Icons.help_outline_rounded, color: Color(0xFF4F46E5), size: 20),
                       ),
                       title: const Text('Pusat Bantuan & Support', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                      subtitle: const Text('Bantuan 24/7 & customer service', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                      subtitle: const Text('Kontak direct WhatsApp, Email & Telepon Dev', style: TextStyle(fontSize: 11, color: Colors.grey)),
                       trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
                       onTap: () => _showHelpCenter(context),
                     ),
@@ -1605,7 +1840,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -2097,7 +2332,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Floating Model Selector Pill
   Widget _buildFloatingModelSelector() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentModel = _availableModels.firstWhere(
@@ -2168,7 +2402,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Sidebar Drawer
   Widget _buildDrawer() {
     final isDark = widget.isDarkMode;
 
@@ -2176,7 +2409,6 @@ class _ChatScreenState extends State<ChatScreen> {
       child: SafeArea(
         child: Column(
           children: [
-            // User Header
             GestureDetector(
               onTap: () {
                 Navigator.pop(context);
@@ -2235,7 +2467,6 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
 
-            // Button New Chat (Fixed single '+' sign)
             Padding(
               padding: const EdgeInsets.all(12),
               child: SizedBox(
@@ -2269,7 +2500,6 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
 
-            // History Content
             Expanded(
               child: widget.user.isGuest
                   ? Center(
@@ -2438,7 +2668,6 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
             ),
 
-            // Bottom Section
             Container(
               padding: const EdgeInsets.all(12),
               decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFFE2E8F0)))),
@@ -2522,7 +2751,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Welcome Screen
   Widget _buildWelcomeScreen() {
     final prompts = widget.language == 'en'
         ? [
@@ -2606,7 +2834,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Message List
   Widget _buildMessageList() {
     return ListView.builder(
       controller: _scrollController,
@@ -2691,7 +2918,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Floating Input Bar
   Widget _buildInputBar() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
