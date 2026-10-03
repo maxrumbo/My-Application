@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"net/smtp"
 	"os"
 	"strings"
 	"time"
@@ -81,6 +82,51 @@ func generateOTP() string {
 		return "1234"
 	}
 	return fmt.Sprintf("%04d", n.Int64()+1000)
+}
+
+func sendOTPEmail(toEmail, otpCode, subject string) error {
+	smtpHost := os.Getenv("SMTP_HOST")
+	smtpPort := os.Getenv("SMTP_PORT")
+	smtpEmail := os.Getenv("SMTP_EMAIL")
+	smtpPassword := os.Getenv("SMTP_PASSWORD")
+
+	if smtpHost == "" || smtpEmail == "" || smtpPassword == "" {
+		log.Printf("[SMTP Warning] SMTP config incomplete in .env. OTP for %s: %s\n", toEmail, otpCode)
+		return nil
+	}
+
+	if smtpPort == "" {
+		smtpPort = "587"
+	}
+
+	auth := smtp.PlainAuth("", smtpEmail, smtpPassword, smtpHost)
+
+	msg := []byte(fmt.Sprintf(
+		"From: Asisten Kurir AI <%s>\r\n"+
+			"To: %s\r\n"+
+			"Subject: %s\r\n"+
+			"MIME-Version: 1.0\r\n"+
+			"Content-Type: text/html; charset=UTF-8\r\n\r\n"+
+			"<html><body style='font-family:sans-serif;'>"+
+			"<div style='max-width:480px;padding:24px;border:1px solid #E2E8F0;border-radius:16px;'>"+
+			"<h2 style='color:#4F46E5;margin-top:0;'>Asisten AI Kurir</h2>"+
+			"<p style='color:#334155;'>Kode OTP verifikasi Anda adalah:</p>"+
+			"<div style='font-size:32px;font-weight:bold;letter-spacing:6px;color:#4F46E5;margin:16px 0;'>%s</div>"+
+			"<p style='color:#64748B;font-size:12px;'>Kode berlaku selama 5 menit. Jangan bagikan kode ini kepada siapapun.</p>"+
+			"</div>"+
+			"</body></html>",
+		smtpEmail, toEmail, subject, otpCode,
+	))
+
+	addr := fmt.Sprintf("%s:%s", smtpHost, smtpPort)
+	err := smtp.SendMail(addr, auth, smtpEmail, []string{toEmail}, msg)
+	if err != nil {
+		log.Printf("[SMTP Error] Gagal mengirim email ke %s: %v\n", toEmail, err)
+		return err
+	}
+
+	log.Printf("[SMTP Success] OTP email berhasil dikirim ke %s\n", toEmail)
+	return nil
 }
 
 func initStorage() {
@@ -179,7 +225,7 @@ func main() {
 
 	// ==================== AUTH ENDPOINTS ====================
 
-	// Register (Local Email + Password)
+	// Register (Local Email + Password + OTP Email)
 	app.Post("/api/auth/register", func(c *fiber.Ctx) error {
 		type Req struct {
 			Name     string `json:"name"`
@@ -204,14 +250,15 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		// Generate 4-digit OTP and store in Redis
+		// Generate 4-digit OTP, store in Redis & send real email
 		otpCode := generateOTP()
 		if redisClient != nil {
 			redisClient.Set(ctx, "otp:register:"+email, otpCode, 5*time.Minute)
 		}
 
+		go sendOTPEmail(email, otpCode, "Kode OTP Verifikasi Pendaftaran - Asisten AI Kurir")
+
 		if usersCollection != nil {
-			// Upsert unverified user in Mongo
 			userDoc := UserDoc{
 				Name:         name,
 				Email:        email,
@@ -243,11 +290,11 @@ func main() {
 			)
 		}
 
-		log.Printf("[Register] Email: %s | OTP Code Demo: %s\n", email, otpCode)
+		log.Printf("[Register] Email: %s | OTP Code: %s\n", email, otpCode)
 
 		return c.JSON(fiber.Map{
 			"status":   "ok",
-			"message":  "OTP verifikasi telah dikirim ke email",
+			"message":  "OTP verifikasi telah dikirim ke email " + email,
 			"email":    email,
 			"otp_demo": otpCode,
 		})
@@ -270,7 +317,6 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		// Validate OTP from Redis
 		var validOTP string
 		if redisClient != nil {
 			validOTP, _ = redisClient.Get(ctx, "otp:register:"+email).Result()
@@ -280,7 +326,6 @@ func main() {
 			return c.Status(400).JSON(fiber.Map{"error": "Kode OTP tidak valid atau kadaluarsa"})
 		}
 
-		// Update MongoDB User -> is_verified = true
 		if usersCollection != nil {
 			_, _ = usersCollection.UpdateOne(ctx,
 				bson.M{"email": email},
@@ -325,7 +370,6 @@ func main() {
 		if usersCollection != nil {
 			err := usersCollection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
 			if err != nil {
-				// Auto-create user if first time login demo
 				user = UserDoc{
 					Name:         strings.Split(email, "@")[0],
 					Email:        email,
@@ -358,7 +402,7 @@ func main() {
 		})
 	})
 
-	// Google Sign In
+	// Google Sign In (OAuth Provider Verified)
 	app.Post("/api/auth/google", func(c *fiber.Ctx) error {
 		type Req struct {
 			Email string `json:"email"`
@@ -401,6 +445,8 @@ func main() {
 			)
 		}
 
+		log.Printf("[Google Auth] Successful login for: %s (%s)\n", name, email)
+
 		return c.JSON(fiber.Map{
 			"status": "ok",
 			"user": fiber.Map{
@@ -434,11 +480,13 @@ func main() {
 			redisClient.Set(ctx, "otp:reset:"+email, otpCode, 5*time.Minute)
 		}
 
-		log.Printf("[Password Reset OTP] Email: %s | OTP Demo: %s\n", email, otpCode)
+		go sendOTPEmail(email, otpCode, "Kode OTP Reset Kata Sandi - Asisten AI Kurir")
+
+		log.Printf("[Password Reset OTP] Email: %s | OTP Code: %s\n", email, otpCode)
 
 		return c.JSON(fiber.Map{
 			"status":   "ok",
-			"message":  "Kode OTP atur ulang kata sandi dikirim",
+			"message":  "Kode OTP atur ulang kata sandi dikirim ke email " + email,
 			"email":    email,
 			"otp_demo": otpCode,
 		})
