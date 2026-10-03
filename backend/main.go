@@ -3,9 +3,14 @@ package main
 import (
 	"bufio"
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"log"
+	"math/big"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -18,8 +23,22 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// BSON & JSON Data Models
+type UserDoc struct {
+	ID           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Name         string             `bson:"name" json:"name"`
+	Email        string             `bson:"email" json:"email"`
+	PasswordHash string             `bson:"password_hash,omitempty" json:"-"`
+	Role         string             `bson:"role" json:"role"`
+	IsVerified   bool               `bson:"is_verified" json:"is_verified"`
+	AuthProvider string             `bson:"auth_provider" json:"auth_provider"` // "local" or "google"
+	CreatedAt    time.Time          `bson:"created_at" json:"created_at"`
+	UpdatedAt    time.Time          `bson:"updated_at" json:"updated_at"`
+}
+
 type ChatSessionDoc struct {
 	ID        string    `bson:"_id" json:"id"`
+	UserEmail string    `bson:"user_email" json:"user_email"`
 	Title     string    `bson:"title" json:"title"`
 	CreatedAt time.Time `bson:"created_at" json:"created_at"`
 }
@@ -32,12 +51,37 @@ type ChatMessageDoc struct {
 	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
 }
 
+type ComplaintDoc struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	UserEmail string             `bson:"user_email" json:"user_email"`
+	Category  string             `bson:"category" json:"category"`
+	Message   string             `bson:"message" json:"message"`
+	Status    string             `bson:"status" json:"status"` // "open", "resolved"
+	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
+}
+
 var (
-	mongoClient        *mongo.Client
-	sessionsCollection *mongo.Collection
-	messagesCollection *mongo.Collection
-	redisClient        *redis.Client
+	mongoClient         *mongo.Client
+	usersCollection      *mongo.Collection
+	sessionsCollection   *mongo.Collection
+	messagesCollection   *mongo.Collection
+	complaintsCollection *mongo.Collection
+	redisClient         *redis.Client
 )
+
+func hashPassword(password string) string {
+	hasher := sha256.New()
+	hasher.Write([]byte(password + "my_secret_salt_2026"))
+	return hex.EncodeToString(hasher.Sum(nil))
+}
+
+func generateOTP() string {
+	n, err := rand.Int(rand.Reader, big.NewInt(9000))
+	if err != nil {
+		return "1234"
+	}
+	return fmt.Sprintf("%04d", n.Int64()+1000)
+}
 
 func initStorage() {
 	mongoURI := os.Getenv("MONGO_URI")
@@ -64,8 +108,16 @@ func initStorage() {
 		} else {
 			log.Println("[MongoDB] Connected successfully!")
 			db := mongoClient.Database("chatbot_db")
+			usersCollection = db.Collection("users")
 			sessionsCollection = db.Collection("sessions")
 			messagesCollection = db.Collection("messages")
+			complaintsCollection = db.Collection("complaints")
+
+			// Create Unique Index for email
+			_, _ = usersCollection.Indexes().CreateOne(ctx, mongo.IndexModel{
+				Keys:    bson.D{{Key: "email", Value: 1}},
+				Options: options.Index().SetUnique(true),
+			})
 		}
 	}
 
@@ -124,6 +176,359 @@ func main() {
 			"time":    time.Now().Format(time.RFC3339),
 		})
 	})
+
+	// ==================== AUTH ENDPOINTS ====================
+
+	// Register (Local Email + Password)
+	app.Post("/api/auth/register", func(c *fiber.Ctx) error {
+		type Req struct {
+			Name     string `json:"name"`
+			Email    string `json:"email"`
+			Password string `json:"password"`
+		}
+		var req Req
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid request body"})
+		}
+
+		email := strings.ToLower(strings.TrimSpace(req.Email))
+		if email == "" || req.Password == "" {
+			return c.Status(400).JSON(fiber.Map{"error": "Email and password are required"})
+		}
+
+		name := strings.TrimSpace(req.Name)
+		if name == "" {
+			name = strings.Split(email, "@")[0]
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		// Generate 4-digit OTP and store in Redis
+		otpCode := generateOTP()
+		if redisClient != nil {
+			redisClient.Set(ctx, "otp:register:"+email, otpCode, 5*time.Minute)
+		}
+
+		if usersCollection != nil {
+			// Upsert unverified user in Mongo
+			userDoc := UserDoc{
+				Name:         name,
+				Email:        email,
+				PasswordHash: hashPassword(req.Password),
+				Role:         "Staf Kurir & Logistik",
+				IsVerified:   false,
+				AuthProvider: "local",
+				CreatedAt:    time.Now(),
+				UpdatedAt:    time.Now(),
+			}
+
+			opts := options.Update().SetUpsert(true)
+			_, _ = usersCollection.UpdateOne(ctx,
+				bson.M{"email": email},
+				bson.M{
+					"$set": bson.M{
+						"name":          userDoc.Name,
+						"password_hash": userDoc.PasswordHash,
+						"role":          userDoc.Role,
+						"auth_provider": userDoc.AuthProvider,
+						"updated_at":    time.Now(),
+					},
+					"$setOnInsert": bson.M{
+						"created_at":  time.Now(),
+						"is_verified": false,
+					},
+				},
+				opts,
+			)
+		}
+
+		log.Printf("[Register] Email: %s | OTP Code Demo: %s\n", email, otpCode)
+
+		return c.JSON(fiber.Map{
+			"status":   "ok",
+			"message":  "OTP verifikasi telah dikirim ke email",
+			"email":    email,
+			"otp_demo": otpCode,
+		})
+	})
+
+	// Verify OTP
+	app.Post("/api/auth/verify-otp", func(c *fiber.Ctx) error {
+		type Req struct {
+			Email string `json:"email"`
+			Code  string `json:"code"`
+		}
+		var req Req
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid request body"})
+		}
+
+		email := strings.ToLower(strings.TrimSpace(req.Email))
+		code := strings.TrimSpace(req.Code)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		// Validate OTP from Redis
+		var validOTP string
+		if redisClient != nil {
+			validOTP, _ = redisClient.Get(ctx, "otp:register:"+email).Result()
+		}
+
+		if validOTP != "" && validOTP != code {
+			return c.Status(400).JSON(fiber.Map{"error": "Kode OTP tidak valid atau kadaluarsa"})
+		}
+
+		// Update MongoDB User -> is_verified = true
+		if usersCollection != nil {
+			_, _ = usersCollection.UpdateOne(ctx,
+				bson.M{"email": email},
+				bson.M{"$set": bson.M{"is_verified": true, "updated_at": time.Now()}},
+			)
+		}
+
+		if redisClient != nil {
+			redisClient.Del(ctx, "otp:register:"+email)
+		}
+
+		return c.JSON(fiber.Map{
+			"status":  "ok",
+			"message": "Akun berhasil diverifikasi!",
+			"user": fiber.Map{
+				"email":       email,
+				"is_verified": true,
+			},
+		})
+	})
+
+	// Login (Local)
+	app.Post("/api/auth/login", func(c *fiber.Ctx) error {
+		type Req struct {
+			Email    string `json:"email"`
+			Password string `json:"password"`
+		}
+		var req Req
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid request body"})
+		}
+
+		email := strings.ToLower(strings.TrimSpace(req.Email))
+		if email == "" {
+			return c.Status(400).JSON(fiber.Map{"error": "Email is required"})
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		var user UserDoc
+		if usersCollection != nil {
+			err := usersCollection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
+			if err != nil {
+				// Auto-create user if first time login demo
+				user = UserDoc{
+					Name:         strings.Split(email, "@")[0],
+					Email:        email,
+					PasswordHash: hashPassword(req.Password),
+					Role:         "Staf Kurir & Logistik",
+					IsVerified:   true,
+					AuthProvider: "local",
+					CreatedAt:    time.Now(),
+					UpdatedAt:    time.Now(),
+				}
+				_, _ = usersCollection.InsertOne(ctx, user)
+			}
+		} else {
+			user = UserDoc{
+				Name:       strings.Split(email, "@")[0],
+				Email:      email,
+				Role:       "Staf Kurir & Logistik",
+				IsVerified: true,
+			}
+		}
+
+		return c.JSON(fiber.Map{
+			"status": "ok",
+			"user": fiber.Map{
+				"name":        user.Name,
+				"email":       user.Email,
+				"role":        user.Role,
+				"is_verified": user.IsVerified,
+			},
+		})
+	})
+
+	// Google Sign In
+	app.Post("/api/auth/google", func(c *fiber.Ctx) error {
+		type Req struct {
+			Email string `json:"email"`
+			Name  string `json:"name"`
+		}
+		var req Req
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid request body"})
+		}
+
+		email := strings.ToLower(strings.TrimSpace(req.Email))
+		if email == "" {
+			email = "google.user@gmail.com"
+		}
+		name := strings.TrimSpace(req.Name)
+		if name == "" {
+			name = "Pengguna Google"
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if usersCollection != nil {
+			opts := options.Update().SetUpsert(true)
+			_, _ = usersCollection.UpdateOne(ctx,
+				bson.M{"email": email},
+				bson.M{
+					"$set": bson.M{
+						"name":          name,
+						"is_verified":   true,
+						"auth_provider": "google",
+						"updated_at":    time.Now(),
+					},
+					"$setOnInsert": bson.M{
+						"created_at": time.Now(),
+						"role":       "Staf Kurir & Logistik",
+					},
+				},
+				opts,
+			)
+		}
+
+		return c.JSON(fiber.Map{
+			"status": "ok",
+			"user": fiber.Map{
+				"name":          name,
+				"email":         email,
+				"role":          "Staf Kurir & Logistik",
+				"is_verified":   true,
+				"auth_provider": "google",
+			},
+		})
+	})
+
+	// Request Forgot Password OTP
+	app.Post("/api/auth/forgot-password/otp", func(c *fiber.Ctx) error {
+		type Req struct {
+			Email string `json:"email"`
+		}
+		var req Req
+		_ = c.BodyParser(&req)
+
+		email := strings.ToLower(strings.TrimSpace(req.Email))
+		if email == "" {
+			return c.Status(400).JSON(fiber.Map{"error": "Email is required"})
+		}
+
+		otpCode := generateOTP()
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		if redisClient != nil {
+			redisClient.Set(ctx, "otp:reset:"+email, otpCode, 5*time.Minute)
+		}
+
+		log.Printf("[Password Reset OTP] Email: %s | OTP Demo: %s\n", email, otpCode)
+
+		return c.JSON(fiber.Map{
+			"status":   "ok",
+			"message":  "Kode OTP atur ulang kata sandi dikirim",
+			"email":    email,
+			"otp_demo": otpCode,
+		})
+	})
+
+	// Reset Password
+	app.Post("/api/auth/forgot-password/reset", func(c *fiber.Ctx) error {
+		type Req struct {
+			Email       string `json:"email"`
+			Code        string `json:"code"`
+			NewPassword string `json:"new_password"`
+		}
+		var req Req
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid body"})
+		}
+
+		email := strings.ToLower(strings.TrimSpace(req.Email))
+		if req.NewPassword == "" {
+			return c.Status(400).JSON(fiber.Map{"error": "New password is required"})
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if usersCollection != nil {
+			_, _ = usersCollection.UpdateOne(ctx,
+				bson.M{"email": email},
+				bson.M{"$set": bson.M{
+					"password_hash": hashPassword(req.NewPassword),
+					"updated_at":    time.Now(),
+				}},
+			)
+		}
+
+		if redisClient != nil {
+			redisClient.Del(ctx, "otp:reset:"+email)
+		}
+
+		return c.JSON(fiber.Map{
+			"status":  "ok",
+			"message": "Kata sandi berhasil diperbarui!",
+		})
+	})
+
+	// ==================== SUPPORT COMPLAINT ENDPOINT ====================
+	app.Post("/api/support/complaint", func(c *fiber.Ctx) error {
+		type Req struct {
+			Email    string `json:"email"`
+			Category string `json:"category"`
+			Message  string `json:"message"`
+		}
+		var req Req
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid body"})
+		}
+
+		email := strings.ToLower(strings.TrimSpace(req.Email))
+		if req.Message == "" {
+			return c.Status(400).JSON(fiber.Map{"error": "Pesan keluhan tidak boleh kosong"})
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		complaint := ComplaintDoc{
+			UserEmail: email,
+			Category:  req.Category,
+			Message:   req.Message,
+			Status:    "open",
+			CreatedAt: time.Now(),
+		}
+
+		if complaintsCollection != nil {
+			_, err := complaintsCollection.InsertOne(ctx, complaint)
+			if err != nil {
+				return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+			}
+		}
+
+		log.Printf("[Complaint Received] Email: %s | Category: %s | Msg: %s\n",
+			email, req.Category, req.Message)
+
+		return c.JSON(fiber.Map{
+			"status":  "ok",
+			"message": "Keluhan Anda telah berhasil dicatat dan diteruskan ke Developer!",
+		})
+	})
+
+	// ==================== CHAT & SESSIONS ENDPOINTS ====================
 
 	// Get All Sessions
 	app.Get("/api/sessions", func(c *fiber.Ctx) error {
@@ -202,7 +607,7 @@ func main() {
 		return c.JSON(fiber.Map{"status": "deleted", "session_id": sessionID})
 	})
 
-	// Streaming chat endpoint (SSE)
+	// Streaming Chat Endpoint (SSE)
 	app.Get("/api/chat/stream", func(c *fiber.Ctx) error {
 		c.Set("Content-Type", "text/event-stream")
 		c.Set("Cache-Control", "no-cache")
@@ -216,13 +621,11 @@ func main() {
 		log.Printf("[Stream Request] Session: %s | Model: %s | Prompt: %s\n",
 			sessionID, modelID, prompt)
 
-		// Simpan / update Session & User Message ke MongoDB
 		if sessionsCollection != nil && messagesCollection != nil {
 			go func(sID, p string) {
 				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 				defer cancel()
 
-				// Upsert session
 				title := p
 				if len(title) > 30 {
 					title = title[:30] + "..."
@@ -241,7 +644,6 @@ func main() {
 					opts,
 				)
 
-				// Insert user message
 				_, _ = messagesCollection.InsertOne(ctx, ChatMessageDoc{
 					SessionID: sID,
 					Sender:    "user",
@@ -252,7 +654,6 @@ func main() {
 		}
 
 		c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
-			// Simulasi response token dari model AI pilihan user
 			replyTokens := []string{
 				"Halo! ", "Terima ", "kasih ", "sudah ", "bertanya: ",
 				"\"" + prompt + "\".\n\n",
@@ -270,7 +671,6 @@ func main() {
 				time.Sleep(100 * time.Millisecond)
 			}
 
-			// Simpan respon AI ke MongoDB & Redis
 			if messagesCollection != nil {
 				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 				defer cancel()
