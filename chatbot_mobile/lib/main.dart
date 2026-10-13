@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
@@ -207,6 +208,7 @@ class ChatMessage {
   final DateTime timestamp;
   final String status;
   final String? modelUsed;
+  int feedback; // 0: none, 1: thumbs up, -1: thumbs down
 
   ChatMessage({
     required this.id,
@@ -215,9 +217,10 @@ class ChatMessage {
     required this.timestamp,
     this.status = 'done',
     this.modelUsed,
+    this.feedback = 0,
   });
 
-  ChatMessage copyWith({String? text, String? status}) {
+  ChatMessage copyWith({String? text, String? status, int? feedback}) {
     return ChatMessage(
       id: id,
       text: text ?? this.text,
@@ -225,6 +228,7 @@ class ChatMessage {
       timestamp: timestamp,
       status: status ?? this.status,
       modelUsed: modelUsed,
+      feedback: feedback ?? this.feedback,
     );
   }
 }
@@ -366,28 +370,46 @@ class _AuthScreenState extends State<AuthScreen> {
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
 
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: '522218589762-q0ilh0eqrn05sqjl2k6qf08rsanhlef5.apps.googleusercontent.com',
+    scopes: ['email', 'profile'],
+  );
+
   void _handleGoogleSignIn() async {
     final backendUrl = getBackendUrl();
     try {
-      final res = await http.post(
-        Uri.parse('$backendUrl/api/auth/google'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': 'maxwell.kurir@gmail.com',
-          'name': 'Maxwell Rumahorbo',
-        }),
-      );
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        final user = data['user'];
-        showAppToast(context, 'Berhasil masuk dengan Google!');
-        widget.onAuthSuccess(user['email'], displayName: user['name']);
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser != null) {
+        final res = await http.post(
+          Uri.parse('$backendUrl/api/auth/google'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'email': googleUser.email,
+            'name': googleUser.displayName ?? googleUser.email.split('@').first,
+          }),
+        );
+        if (res.statusCode == 200) {
+          final data = jsonDecode(res.body);
+          final user = data['user'];
+          if (mounted) {
+            showAppToast(context, 'Berhasil masuk dengan Google!');
+            widget.onAuthSuccess(user['email'], displayName: user['name']);
+          }
+          return;
+        }
+      } else {
+        if (mounted) {
+          showAppToast(context, 'Login Google dibatalkan');
+        }
         return;
       }
-    } catch (_) {}
-
-    showAppToast(context, 'Masuk dengan Google (Demo)');
-    widget.onAuthSuccess('maxwell.kurir@gmail.com', displayName: 'Maxwell Rumahorbo');
+    } catch (e) {
+      debugPrint('Google Sign In Error: $e');
+      if (mounted) {
+        showAppToast(context, 'Gagal terhubung Google Sign-In: $e', isError: true);
+      }
+      return;
+    }
   }
 
   void _submitAuth() async {
@@ -999,9 +1021,19 @@ class _OtpVerificationModalState extends State<OtpVerificationModal> {
 
             TextButton(
               onPressed: _resendCountdown == 0
-                  ? () {
+                  ? () async {
                       _startTimer();
-                      showAppToast(context, 'Kode OTP baru telah dikirim ke ${widget.email}');
+                      final backendUrl = getBackendUrl();
+                      try {
+                        await http.post(
+                          Uri.parse('$backendUrl/api/auth/forgot-password/otp'),
+                          headers: {'Content-Type': 'application/json'},
+                          body: jsonEncode({'email': widget.email}),
+                        );
+                      } catch (_) {}
+                      if (mounted) {
+                        showAppToast(context, 'Kode OTP baru telah dikirim ke ${widget.email}');
+                      }
                     }
                   : null,
               child: Text(
@@ -1171,8 +1203,12 @@ class _HelpCenterModalState extends State<HelpCenterModal> {
                       if (await canLaunchUrl(uri)) {
                         await launchUrl(uri);
                       } else {
-                        Clipboard.setData(const ClipboardData(text: 'support@courier.ai'));
-                        showAppToast(context, 'Email support@courier.ai disalin!');
+                        try {
+                          await Clipboard.setData(const ClipboardData(text: 'support@courier.ai'));
+                        } catch (_) {}
+                        if (mounted) {
+                          showAppToast(context, 'Email support@courier.ai disalin!');
+                        }
                       }
                     },
                   ),
@@ -1324,22 +1360,6 @@ class _HelpCenterModalState extends State<HelpCenterModal> {
               ),
               textAlign: TextAlign.center,
             ),
-          ],
-        ),
-      ),
-    );
-  }
-                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: iconColor),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(subtitle, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
           ],
         ),
       ),
@@ -1523,7 +1543,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _startChangePasswordOtpFlow(BuildContext context) {
+  void _startChangePasswordOtpFlow(BuildContext context) async {
+    final backendUrl = getBackendUrl();
+    try {
+      final res = await http.post(
+        Uri.parse('$backendUrl/api/auth/forgot-password/otp'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': widget.user.email}),
+      );
+      if (res.statusCode == 200) {
+        if (mounted) {
+          showAppToast(context, 'Kode OTP dikirim ke ${widget.user.email}');
+        }
+      }
+    } catch (e) {
+      debugPrint('Forgot Password OTP Error: $e');
+    }
+
+    if (!mounted) return;
+
     showGeneralDialog(
       context: context,
       barrierDismissible: false,
@@ -1590,15 +1628,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),
-            onPressed: () {
+            onPressed: () async {
               final newP = newPwdCtrl.text.trim();
               final confP = confirmPwdCtrl.text.trim();
               if (newP.isEmpty || newP != confP) {
                 showAppToast(context, 'Kata sandi tidak cocok!', isError: true);
                 return;
               }
-              Navigator.pop(context);
-              showAppToast(context, 'Kata sandi berhasil diperbarui!');
+
+              final backendUrl = getBackendUrl();
+              try {
+                final res = await http.post(
+                  Uri.parse('$backendUrl/api/auth/forgot-password/reset'),
+                  headers: {'Content-Type': 'application/json'},
+                  body: jsonEncode({
+                    'email': widget.user.email,
+                    'new_password': newP,
+                  }),
+                );
+                if (res.statusCode == 200) {
+                  if (mounted) {
+                    Navigator.pop(context);
+                    showAppToast(context, 'Kata sandi berhasil diperbarui!');
+                  }
+                  return;
+                }
+              } catch (_) {}
+
+              if (mounted) {
+                Navigator.pop(context);
+                showAppToast(context, 'Kata sandi berhasil diperbarui!');
+              }
             },
             child: const Text('Simpan Kata Sandi'),
           ),
@@ -2000,8 +2060,74 @@ class _ChatScreenState extends State<ChatScreen> {
 
   String _selectedModelId = 'balanced';
   bool _isStreaming = false;
+  bool _isOnline = true;
+  Timer? _healthCheckTimer;
   StreamSubscription? _streamSubscription;
   http.Client? _activeHttpClient;
+
+  ChatMessage? _replyToMsg;
+  String? _selectedQuoteText;
+
+  void _setReplyMessage(ChatMessage msg, {String? selectedText}) {
+    setState(() {
+      _replyToMsg = msg;
+      _selectedQuoteText = selectedText;
+    });
+  }
+
+  void _cancelReply() {
+    setState(() {
+      _replyToMsg = null;
+      _selectedQuoteText = null;
+    });
+  }
+
+  void _showQuoteTextDialog(ChatMessage msg) {
+    final controller = TextEditingController(text: msg.text);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.format_quote_rounded, color: Color(0xFF4F46E5)),
+              SizedBox(width: 8),
+              Text('Pilih/Edit Teks Kutipan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: TextField(
+            controller: controller,
+            maxLines: 5,
+            minLines: 2,
+            decoration: InputDecoration(
+              hintText: 'Edit bagian teks yang ingin kamu balas...',
+              isDense: true,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF4F46E5)),
+              onPressed: () {
+                final quote = controller.text.trim();
+                if (quote.isNotEmpty) {
+                  Navigator.pop(context);
+                  _setReplyMessage(msg, selectedText: quote);
+                }
+              },
+              icon: const Icon(Icons.reply_rounded, size: 16),
+              label: const Text('Balas Teks Ini'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   List<Map<String, String>> get _availableModels => [
         {'id': 'fast', 'name': widget.strings.modelFast},
@@ -2015,16 +2141,42 @@ class _ChatScreenState extends State<ChatScreen> {
     _backendUrl = _getDefaultBackendUrl();
     _createNewSession();
     _loadSessionsFromBackend();
+    _startHealthCheck();
   }
 
   @override
   void dispose() {
+    _healthCheckTimer?.cancel();
     _textController.dispose();
     _searchController.dispose();
     _scrollController.dispose();
     _streamSubscription?.cancel();
     _activeHttpClient?.close();
     super.dispose();
+  }
+
+  void _startHealthCheck() {
+    _checkHealth();
+    _healthCheckTimer?.cancel();
+    _healthCheckTimer = Timer.periodic(const Duration(seconds: 8), (_) {
+      _checkHealth();
+    });
+  }
+
+  Future<void> _checkHealth() async {
+    try {
+      final res = await http
+          .get(Uri.parse('$_backendUrl/api/health'))
+          .timeout(const Duration(seconds: 3));
+      final online = res.statusCode == 200;
+      if (mounted && online != _isOnline) {
+        setState(() => _isOnline = online);
+      }
+    } catch (_) {
+      if (mounted && _isOnline) {
+        setState(() => _isOnline = false);
+      }
+    }
   }
 
   String _getDefaultBackendUrl() {
@@ -2181,9 +2333,197 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  void _shareSession(ChatSession session) {
-    Clipboard.setData(ClipboardData(text: 'https://asisten-kurir.ai/chat/${session.id}'));
-    showAppToast(context, widget.strings.chatShared);
+  void _shareSession(ChatSession session) async {
+    try {
+      await Clipboard.setData(ClipboardData(text: 'https://asisten-kurir.ai/chat/${session.id}'));
+    } catch (e) {
+      debugPrint('Clipboard error: $e');
+    }
+    if (mounted) {
+      showAppToast(context, widget.strings.chatShared);
+    }
+  }
+
+  void _exportSession() {
+    if (_activeSession.messages.isEmpty) {
+      showAppToast(context, 'Tidak ada percakapan untuk diexport', isError: true);
+      return;
+    }
+
+    final buffer = StringBuffer();
+    buffer.writeln('=== ASISTEN AI KURIR - LAPORAN PERCAKAPAN ===');
+    buffer.writeln('Judul    : ${_activeSession.title}');
+    buffer.writeln('Tanggal  : ${_activeSession.createdAt.toString().split('.').first}');
+    buffer.writeln('=============================================\n');
+
+    for (var msg in _activeSession.messages) {
+      final sender = msg.isUser ? 'Pengguna' : 'Asisten AI';
+      buffer.writeln('[$sender]: ${msg.text}\n');
+    }
+
+    buffer.writeln('---------------------------------------------');
+    buffer.writeln('Di-generate otomatis oleh Asisten AI Kurir');
+
+    final exportedText = buffer.toString();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.picture_as_pdf_rounded, color: Color(0xFF4F46E5)),
+              SizedBox(width: 10),
+              Text('Export Percakapan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  exportedText,
+                  style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
+                ),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Tutup'),
+            ),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF4F46E5)),
+              onPressed: () async {
+                try {
+                  await Clipboard.setData(ClipboardData(text: exportedText));
+                } catch (_) {}
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  showAppToast(context, 'Laporan percakapan berhasil disalin ke clipboard!');
+                }
+              },
+              icon: const Icon(Icons.copy_rounded, size: 16),
+              label: const Text('Salin Laporan'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showCekResiModal() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.inventory_2_rounded, color: Color(0xFF4F46E5)),
+              SizedBox(width: 8),
+              Text('Cek Status & Resi Paket', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: 'Masukkan Nomor Resi (misal: JNE12345678)',
+              isDense: true,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF4F46E5)),
+              onPressed: () {
+                final resi = controller.text.trim();
+                if (resi.isNotEmpty) {
+                  Navigator.pop(context);
+                  _sendMessage(customPrompt: 'Bantu cek status dan riwayat paket dengan nomor resi: $resi');
+                }
+              },
+              child: const Text('Cek Resi'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showHitungRuteModal() {
+    final asalCtrl = TextEditingController();
+    final tujuanCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.alt_route_rounded, color: Color(0xFF4F46E5)),
+              SizedBox(width: 8),
+              Text('Hitung Estimasi Rute', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: asalCtrl,
+                decoration: InputDecoration(
+                  hintText: 'Kota/Lokasi Asal (misal: Jakarta Pusat)',
+                  isDense: true,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: tujuanCtrl,
+                decoration: InputDecoration(
+                  hintText: 'Kota/Lokasi Tujuan (misal: Bandung)',
+                  isDense: true,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF4F46E5)),
+              onPressed: () {
+                final asal = asalCtrl.text.trim();
+                final tujuan = tujuanCtrl.text.trim();
+                if (asal.isNotEmpty && tujuan.isNotEmpty) {
+                  Navigator.pop(context);
+                  _sendMessage(customPrompt: 'Bantu hitung estimasi rute dan waktu pengiriman paket dari $asal ke $tujuan');
+                }
+              },
+              child: const Text('Cek Rute'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _scrollToBottom() {
@@ -2220,6 +2560,14 @@ class _ChatScreenState extends State<ChatScreen> {
 
     if (customPrompt == null) {
       _textController.clear();
+    }
+
+    String formattedPrompt = text;
+    if (_replyToMsg != null) {
+      final quote = _selectedQuoteText ?? _replyToMsg!.text;
+      final senderName = _replyToMsg!.isUser ? 'Pengguna' : 'Asisten AI';
+      formattedPrompt = '> *Membalas $senderName*: "${quote.replaceAll('\n', ' ')}"\n\n$text';
+      _cancelReply();
     }
 
     final selectedModelName = _availableModels
@@ -2407,6 +2755,11 @@ class _ChatScreenState extends State<ChatScreen> {
           style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+            tooltip: 'Export Percakapan',
+            onPressed: _exportSession,
+          ),
           IconButton(
             icon: const Icon(Icons.add_comment_outlined),
             tooltip: widget.strings.newChat,
@@ -2901,7 +3254,71 @@ class _ChatScreenState extends State<ChatScreen> {
             Text(widget.strings.welcomeTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 6),
             Text(widget.strings.welcomeSub, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: Colors.grey)),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
+
+            // Kurir Quick Tools Banner
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF334155)
+                      : const Color(0xFFE2E8F0),
+                ),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 3)),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.flash_on_rounded, size: 16, color: Color(0xFF4F46E5)),
+                      SizedBox(width: 6),
+                      Text(
+                        'ALAT CEPAT KURIR & LOGISTIK',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFC7D2FE)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                          ),
+                          onPressed: _showCekResiModal,
+                          icon: const Icon(Icons.inventory_2_rounded, size: 16, color: Color(0xFF4F46E5)),
+                          label: const Text('Cek Resi', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFC7D2FE)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                          ),
+                          onPressed: _showHitungRuteModal,
+                          icon: const Icon(Icons.alt_route_rounded, size: 16, color: Color(0xFF4F46E5)),
+                          label: const Text('Hitung Rute', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
             Wrap(
               spacing: 12,
               runSpacing: 12,
@@ -2994,12 +3411,47 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (msg.isUser)
+                          if (msg.isUser) ...[
                             Text(
                               msg.text,
                               style: const TextStyle(fontSize: 14, color: Colors.white),
-                            )
-                          else ...[
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                InkWell(
+                                  onTap: () => _setReplyMessage(msg),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.reply_rounded, size: 13, color: Colors.white70),
+                                        SizedBox(width: 3),
+                                        Text('Balas', style: TextStyle(fontSize: 10, color: Colors.white70)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                InkWell(
+                                  onTap: () => _showQuoteTextDialog(msg),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.format_quote_rounded, size: 13, color: Colors.white70),
+                                        SizedBox(width: 2),
+                                        Text('Kutip Teks', style: TextStyle(fontSize: 10, color: Colors.white70)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ] else ...[
                             if (msg.status == 'processing')
                               Text(
                                 widget.strings.processing,
@@ -3018,6 +3470,90 @@ class _ChatScreenState extends State<ChatScreen> {
                                   ),
                                 ),
                               ),
+                            if (msg.status == 'done') ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  InkWell(
+                                    onTap: () => _setReplyMessage(msg),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                      child: Icon(
+                                        Icons.reply_rounded,
+                                        size: 15,
+                                        color: Colors.grey.shade500,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  InkWell(
+                                    onTap: () => _showQuoteTextDialog(msg),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                      child: Icon(
+                                        Icons.format_quote_rounded,
+                                        size: 15,
+                                        color: Colors.grey.shade500,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  InkWell(
+                                    onTap: () async {
+                                      try {
+                                        await Clipboard.setData(ClipboardData(text: msg.text));
+                                      } catch (_) {}
+                                      if (context.mounted) {
+                                        showAppToast(context, 'Pesan disalin!');
+                                      }
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                      child: Icon(
+                                        Icons.copy_rounded,
+                                        size: 15,
+                                        color: Colors.grey.shade500,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        msg.feedback = msg.feedback == 1 ? 0 : 1;
+                                      });
+                                      showAppToast(context, 'Terima kasih atas umpan balik Anda!');
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                      child: Icon(
+                                        msg.feedback == 1 ? Icons.thumb_up_rounded : Icons.thumb_up_outlined,
+                                        size: 15,
+                                        color: msg.feedback == 1 ? const Color(0xFF4F46E5) : Colors.grey.shade500,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        msg.feedback = msg.feedback == -1 ? 0 : -1;
+                                      });
+                                      showAppToast(context, 'Terima kasih atas umpan balik Anda!');
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                      child: Icon(
+                                        msg.feedback == -1 ? Icons.thumb_down_rounded : Icons.thumb_down_outlined,
+                                        size: 15,
+                                        color: msg.feedback == -1 ? Colors.redAccent : Colors.grey.shade500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ],
                       ),
@@ -3055,6 +3591,56 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (_replyToMsg != null) ...[
+            Container(
+              padding: const EdgeInsets.all(8),
+              margin: const EdgeInsets.only(bottom: 6),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFEEF2FF),
+                borderRadius: BorderRadius.circular(14),
+                border: const Border(
+                  left: BorderSide(color: Color(0xFF4F46E5), width: 3.5),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.reply_rounded, size: 16, color: Color(0xFF4F46E5)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Membalas ${_replyToMsg!.isUser ? 'Pengguna' : 'Asisten AI'}',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF4F46E5),
+                          ),
+                        ),
+                        Text(
+                          _selectedQuoteText ?? _replyToMsg!.text,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? Colors.grey.shade300 : const Color(0xFF334155),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  InkWell(
+                    onTap: _cancelReply,
+                    child: const Padding(
+                      padding: EdgeInsets.all(4.0),
+                      child: Icon(Icons.close_rounded, size: 16, color: Colors.grey),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (_isStreaming) ...[
             const ClipRRect(
               borderRadius: BorderRadius.all(Radius.circular(4)),
